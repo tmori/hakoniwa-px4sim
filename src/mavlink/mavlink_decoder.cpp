@@ -16,3 +16,23 @@ bool mavlink_decode(const char* packet, int packet_len, mavlink_message_t *msg)
 
     return messageReceived;
 }
+
+bool mavlink_get_message(mavlink_message_t *msg, MavlinkDecodedMessage *message)
+{
+    switch (msg->msgid) {
+        case MAVLINK_MSG_ID_HEARTBEAT: 
+        {
+            message->type = MAVLINK_MSG_TYPE_HEARTBEAT;
+            mavlink_msg_heartbeat_decode(msg, &message->data.heartbeat);
+            return true;
+        }
+        case MAVLINK_MSG_ID_COMMAND_LONG:
+        {
+            message->type = MAVLINK_MSG_TYPE_LONG;
+            mavlink_msg_command_long_decode(msg, &message->data.command_long);
+            return true;
+        }        default:
+            message->type = MAVLINK_MSG_TYPE_UNKNOWN;
+            return false;
+    }
+}

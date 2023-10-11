@@ -50,6 +50,33 @@ int main(int argc, char* argv[])
                 std::cout << "  System ID: " << static_cast<int>(msg.sysid) << std::endl;
                 std::cout << "  Component ID: " << static_cast<int>(msg.compid) << std::endl;
                 std::cout << "  Sequence: " << static_cast<int>(msg.seq) << std::endl;
+
+                MavlinkDecodedMessage message;
+                ret = mavlink_get_message(&msg, &message);
+                if (ret) {
+                    switch (message.type) {
+                    case MAVLINK_MSG_TYPE_HEARTBEAT:
+                        std::cout << "  Type: HEARTBEAT" << std::endl;
+                        std::cout << "  Custom mode: " << message.data.heartbeat.custom_mode << std::endl;
+                        std::cout << "  Base mode: " << static_cast<int>(message.data.heartbeat.base_mode) << std::endl;
+                        std::cout << "  System status: " << static_cast<int>(message.data.heartbeat.system_status) << std::endl;
+                        std::cout << "  MAVLink version: " << static_cast<int>(message.data.heartbeat.mavlink_version) << std::endl;
+                        break;
+                    
+                    case MAVLINK_MSG_TYPE_LONG:
+                        std::cout << "  Type: COMMAND_LONG" << std::endl;
+                        std::cout << "  Target system: " << static_cast<int>(message.data.command_long.target_system) << std::endl;
+                        std::cout << "  Target component: " << static_cast<int>(message.data.command_long.target_component) << std::endl;
+                        std::cout << "  Command ID: " << message.data.command_long.command << std::endl;
+                        std::cout << "  Confirmation: " << static_cast<int>(message.data.command_long.confirmation) << std::endl;
+                        // ... 他のCOMMAND_LONGのパラメータも同様に表示することができます ...
+                        break;
+                    
+                    default:
+                        std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
+                        break;
+                    }
+                }
             }
         } else {
             std::cerr << "Failed to receive data" << std::endl;
