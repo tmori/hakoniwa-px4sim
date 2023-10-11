@@ -1,0 +1,6 @@
+#ifndef _MAVLINK_CONFIG_HPP_
+#define _MAVLINK_CONFIG_HPP_
+
+#define MAVLINK_CONFIG_CHAN_0     0
+
+#endif /* _MAVLINK_CONFIG_HPP_ */

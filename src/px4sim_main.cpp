@@ -1,4 +1,5 @@
 #include "comm/udp_connector.hpp"
+#include "mavlink/mavlink_decoder.hpp"
 #include <iostream>
 #include <cstdlib> // for std::atoi
 
@@ -34,14 +35,25 @@ int main(int argc, char* argv[])
         std::cerr << "Failed to send data" << std::endl;
     }
 
-    // Example: Receiving data
-    char recvBuffer[1024];
-    int recvDataLen;
-    if (clientConnector.recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
-    {
-        std::cout << "Received data: " << recvBuffer << " with length: " << recvDataLen << std::endl;
-    } else {
-        std::cerr << "Failed to receive data" << std::endl;
+    while (true) {
+        char recvBuffer[1024];
+        int recvDataLen;
+        if (clientConnector.recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
+        {
+            std::cout << "Received data with length: " << recvDataLen << std::endl;
+            mavlink_message_t msg;
+            bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
+            if (ret) 
+            {
+                std::cout << "Decoded MAVLink message:" << std::endl;
+                std::cout << "  Message ID: " << msg.msgid << std::endl;
+                std::cout << "  System ID: " << static_cast<int>(msg.sysid) << std::endl;
+                std::cout << "  Component ID: " << static_cast<int>(msg.compid) << std::endl;
+                std::cout << "  Sequence: " << static_cast<int>(msg.seq) << std::endl;
+            }
+        } else {
+            std::cerr << "Failed to receive data" << std::endl;
+        }
     }
 
     clientConnector.close();

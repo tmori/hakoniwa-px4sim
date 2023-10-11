@@ -13,6 +13,7 @@ MESSAGE(STATUS "OS_TYPE=" ${OS_TYPE})
 add_executable(
     hako-px4sim
     comm/udp_connector.cpp
+    mavlink/mavlink_decoder.cpp
     px4sim_main.cpp
 )
 
@@ -20,6 +21,6 @@ target_include_directories(
     hako-px4sim
     PRIVATE /usr/local/include
     PRIVATE /mingw64/include
-    PRIVATE ${MAVLINK_SOURCE_DIR}/minimal
-    PRIVATE ${PROJECT_SOURCE_DIR}/src/comm
+    PRIVATE ${MAVLINK_SOURCE_DIR}/all
+    PRIVATE ${PROJECT_SOURCE_DIR}/src
 )
