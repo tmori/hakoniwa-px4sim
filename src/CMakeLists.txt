@@ -10,9 +10,10 @@ if(WIN32)
 endif(WIN32)
 MESSAGE(STATUS "OS_TYPE=" ${OS_TYPE})
 
-add_library(
-    hako-px4sim STATIC
+add_executable(
+    hako-px4sim
     comm/udp_connector.cpp
+    px4sim_main.cpp
 )
 
 target_include_directories(

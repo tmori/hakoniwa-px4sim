@@ -3,7 +3,7 @@
 
 namespace hako::px4::comm {
     typedef struct {
-        char *ipaddr;
+        const char *ipaddr;
         int portno;
     } IcommEndpointType;
     class ICommConnector {
