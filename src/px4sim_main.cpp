@@ -1,7 +1,42 @@
 #include "comm/udp_connector.hpp"
 #include "mavlink/mavlink_decoder.hpp"
+#include "mavlink/mavlink_encoder.hpp"
 #include <iostream>
 #include <cstdlib> // for std::atoi
+
+static void send_heartbeat(hako::px4::comm::ICommConnector &clientConnector)
+{
+    // HEARTBEATメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HEARTBEAT;
+    message.data.heartbeat.type = MAV_TYPE_QUADROTOR; // 例として
+    message.data.heartbeat.autopilot = MAV_AUTOPILOT_PX4;
+    message.data.heartbeat.base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    message.data.heartbeat.custom_mode = 0; // 任意のカスタムモード
+    message.data.heartbeat.system_status = MAV_STATE_STANDBY; // 例として
+
+    // メッセージをエンコード
+    mavlink_message_t mavlinkMsg;
+    if (mavlink_encode_message(&mavlinkMsg, &message)) 
+    {
+        int sentDataLen = 0;
+        // パケットにエンコードされたメッセージを格納
+        char packet[MAVLINK_MAX_PACKET_LEN];
+        int packetLen = mavlink_get_packet(packet, sizeof(packet), &mavlinkMsg);
+        if (packetLen > 0) 
+        {
+            if (clientConnector.send(packet, packetLen, &sentDataLen)) 
+            {
+                std::cout << "Sent MAVLink HEARTBEAT message with length: " << sentDataLen << std::endl;
+            } 
+            else 
+            {
+                std::cerr << "Failed to send MAVLink HEARTBEAT message" << std::endl;
+            }
+        }
+    }
+
+}
 
 int main(int argc, char* argv[]) 
 {
@@ -25,15 +60,7 @@ int main(int argc, char* argv[])
         std::cerr << "Failed to open UDP client" << std::endl;
         return -1;
     }
-
-    // Example: Sending data
-    const char* sendData = "Hello from PX4 Sim!";
-    int sentDataLen;
-    if(clientConnector.send(sendData, strlen(sendData) + 1, &sentDataLen)) { // +1 to include null terminator
-        std::cout << "Sent data: " << sendData << " with length: " << sentDataLen << std::endl;
-    } else {
-        std::cerr << "Failed to send data" << std::endl;
-    }
+    send_heartbeat(clientConnector);
 
     while (true) {
         char recvBuffer[1024];
@@ -77,6 +104,7 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
+                send_heartbeat(clientConnector);
             }
         } else {
             std::cerr << "Failed to receive data" << std::endl;
