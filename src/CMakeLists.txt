@@ -13,6 +13,7 @@ MESSAGE(STATUS "OS_TYPE=" ${OS_TYPE})
 add_executable(
     hako-px4sim
     comm/udp_connector.cpp
+    comm/tcp_connector.cpp
     mavlink/mavlink_decoder.cpp
     mavlink/mavlink_encoder.cpp
     px4sim_main.cpp

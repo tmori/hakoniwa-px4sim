@@ -11,7 +11,6 @@ namespace hako::px4::comm {
         virtual ~ICommConnector() = default;
 
         virtual bool client_open(IcommEndpointType *src, IcommEndpointType *dst) = 0;
-        virtual bool server_open(IcommEndpointType *src) = 0;
 
         virtual bool recv(char* data, int datalen, int* recv_datalen) = 0;
         virtual bool send(const char* data, int datalen, int* send_datalen) = 0;

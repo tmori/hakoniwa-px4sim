@@ -38,25 +38,6 @@ bool UdpConnector::client_open(IcommEndpointType *src, IcommEndpointType *dst) {
     return true;
 }
 
-bool UdpConnector::server_open(IcommEndpointType *src) {
-    if(!src) return false;
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sockfd < 0) {
-        return false;
-    }
-
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_port = htons(src->portno);
-    inet_pton(AF_INET, src->ipaddr, &(local_addr.sin_addr));
-
-    if(bind(sockfd, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0) {
-        close();
-        return false;
-    }
-
-    return true;
-}
 
 bool UdpConnector::recv(char* data, int datalen, int* recv_datalen) {
     if(sockfd < 0 || !data || datalen <= 0) return false;

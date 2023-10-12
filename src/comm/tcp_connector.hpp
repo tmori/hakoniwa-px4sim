@@ -1,5 +1,5 @@
-#ifndef _UDPCONNECTOR_HPP_
-#define _UDPCONNECTOR_HPP_
+#ifndef _TCPCONNECTOR_HPP_
+#define _TCPCONNECTOR_HPP_
 
 #include "icomm_connector.hpp"
 #include <sys/socket.h>
@@ -7,15 +7,15 @@
 
 namespace hako::px4::comm {
 
-class UdpConnector : public ICommConnector {
+class TcpConnector : public ICommConnector {
 private:
     int sockfd; // ソケットのディスクリプタ
     struct sockaddr_in local_addr; // ローカルのアドレス情報
     struct sockaddr_in remote_addr; // リモートのアドレス情報
 
 public:
-    UdpConnector();
-    ~UdpConnector() override;
+    TcpConnector();
+    ~TcpConnector() override;
 
     bool client_open(IcommEndpointType *src, IcommEndpointType *dst) override;
 
@@ -28,4 +28,4 @@ public:
 
 } // namespace hako::px4::comm
 
-#endif /* _UDPCONNECTOR_HPP_ */
+#endif /* _TCPCONNECTOR_HPP_ */

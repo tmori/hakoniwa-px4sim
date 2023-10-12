@@ -68,8 +68,8 @@ static void send_sensor(hako::px4::comm::ICommConnector &clientConnector)
     if(delta_time_microseconds.count() > 500000) { // for example, every 500ms
         fields_updated_rotation = (fields_updated_rotation << 1) | (fields_updated_rotation >> 15);  // 16-bit rotation
     }
-    if(delta_time_microseconds.count() > 100000) { 
-        fields_updated_rotation |= (HIL_SENSOR_UPDATED_XGYRO | HIL_SENSOR_UPDATED_YGYRO | HIL_SENSOR_UPDATED_ZGYRO);
+    if(delta_time_microseconds.count() > 40000) { 
+        fields_updated_rotation |= 0b111;
     }
     // 微小な変動を加える
     test_gyro += 0.001f;
@@ -150,8 +150,8 @@ static void *receiver_thread(void *arg)
                         std::cout << "  Target component: " << static_cast<int>(message.data.command_long.target_component) << std::endl;
                         std::cout << "  Command ID: " << message.data.command_long.command << std::endl;
                         std::cout << "  Confirmation: " << static_cast<int>(message.data.command_long.confirmation) << std::endl;
-                        send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
-                            message.data.command_long.target_system, message.data.command_long.target_component);
+                        //send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
+                        //    message.data.command_long.target_system, message.data.command_long.target_component);
                         break;
                     
                     default:
