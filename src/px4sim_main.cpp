@@ -1,4 +1,4 @@
-#include "comm/udp_connector.hpp"
+#include "comm/tcp_connector.hpp"
 #include "mavlink/mavlink_decoder.hpp"
 #include "mavlink/mavlink_encoder.hpp"
 #include <iostream>
@@ -8,7 +8,7 @@
 
 #include <chrono> // For obtaining the current timestamp
 
-static void send_message(hako::px4::comm::ICommConnector &clientConnector, MavlinkDecodedMessage &message)
+static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecodedMessage &message)
 {
     mavlink_message_t mavlinkMsg;
     if (mavlink_encode_message(&mavlinkMsg, &message)) 
@@ -29,7 +29,7 @@ static void send_message(hako::px4::comm::ICommConnector &clientConnector, Mavli
         }
     }
 }
-static void send_heartbeat(hako::px4::comm::ICommConnector &clientConnector)
+static void send_heartbeat(hako::px4::comm::ICommIO &clientConnector)
 {
     // HEARTBEATメッセージの準備
     MavlinkDecodedMessage message;
@@ -44,7 +44,7 @@ static void send_heartbeat(hako::px4::comm::ICommConnector &clientConnector)
 }
 static auto start_time = std::chrono::system_clock::now();
 
-static void send_sensor(hako::px4::comm::ICommConnector &clientConnector)
+static void send_sensor(hako::px4::comm::ICommIO &clientConnector)
 {
     static float test_gyro = 0.0f;
     // Static variables inside function scope
@@ -94,7 +94,7 @@ static void send_sensor(hako::px4::comm::ICommConnector &clientConnector)
 }
 
 
-static void send_ack(hako::px4::comm::ICommConnector &clientConnector, 
+static void send_ack(hako::px4::comm::ICommIO &clientConnector, 
                      uint16_t command, 
                      uint8_t result, 
                      uint8_t target_system, 
@@ -115,7 +115,7 @@ static void send_ack(hako::px4::comm::ICommConnector &clientConnector,
 }
 static void *receiver_thread(void *arg)
 {
-    hako::px4::comm::ICommConnector *clientConnector = static_cast<hako::px4::comm::ICommConnector *>(arg);
+    hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
     while (true) {
         char recvBuffer[1024];
         int recvDataLen;
@@ -182,17 +182,18 @@ int main(int argc, char* argv[])
     hako::px4::comm::IcommEndpointType remoteEndpoint = { remoteIp, remotePort };
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
-    hako::px4::comm::UdpConnector clientConnector;
+    hako::px4::comm::TcpServer server;
 
-    if (!clientConnector.client_open(&serverEndpoint, &remoteEndpoint)) 
+    auto comm_io = server.server_open(&serverEndpoint);
+    if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open UDP client" << std::endl;
         return -1;
     }
-    send_heartbeat(clientConnector);
+    send_heartbeat(*comm_io);
 
     pthread_t thread;
-    if (pthread_create(&thread, NULL, receiver_thread, &clientConnector) != 0) {
+    if (pthread_create(&thread, NULL, receiver_thread, comm_io) != 0) {
         std::cerr << "Failed to create heartbeat sender thread!" << std::endl;
         return -1;
     }
@@ -200,10 +201,10 @@ int main(int argc, char* argv[])
     int count = 0;
     while (true) {
         if ((count % 10) == 0) {
-            send_heartbeat(clientConnector);
+            send_heartbeat(*comm_io);
         }
         if ((count % 2) == 0) { // 頻度を50Hzに変更してみてください。
-            send_sensor(clientConnector);
+            send_sensor(*comm_io);
         }
 
         usleep(20 * 1000);  // 50Hzに更新する場合、20msごとにsleepします。
@@ -211,6 +212,6 @@ int main(int argc, char* argv[])
     }
 
 
-    clientConnector.close();
+    comm_io->close();
     return 0;
 }

@@ -7,23 +7,37 @@
 
 namespace hako::px4::comm {
 
-class TcpConnector : public ICommConnector {
+class TcpCommIO : public ICommIO {
 private:
     int sockfd; // ソケットのディスクリプタ
-    struct sockaddr_in local_addr; // ローカルのアドレス情報
-    struct sockaddr_in remote_addr; // リモートのアドレス情報
 
 public:
-    TcpConnector();
-    ~TcpConnector() override;
+    TcpCommIO(int sockfd);
+    ~TcpCommIO() override;
 
-    bool client_open(IcommEndpointType *src, IcommEndpointType *dst) override;
-
-    bool recv(char* data, int datalen, int* recv_datalen) override;
     bool send(const char* data, int datalen, int* send_datalen) override;
-
+    bool recv(char* data, int datalen, int* recv_datalen) override;
     bool close() override;
+};
 
+class TcpClient : public ICommClient {
+private:
+
+public:
+    TcpClient();
+    ~TcpClient() override;
+
+    ICommIO* client_open(IcommEndpointType *src, IcommEndpointType *dst) override;
+};
+
+class TcpServer : public ICommServer {
+private:
+
+public:
+    TcpServer();
+    ~TcpServer() override;
+
+    ICommIO* server_open(IcommEndpointType *endpoint) override;
 };
 
 } // namespace hako::px4::comm

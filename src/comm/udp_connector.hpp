@@ -7,23 +7,40 @@
 
 namespace hako::px4::comm {
 
-class UdpConnector : public ICommConnector {
+class UdpCommIO : public ICommIO {
 private:
     int sockfd; // ソケットのディスクリプタ
-    struct sockaddr_in local_addr; // ローカルのアドレス情報
     struct sockaddr_in remote_addr; // リモートのアドレス情報
 
 public:
-    UdpConnector();
-    ~UdpConnector() override;
+    UdpCommIO(int sockfd, const sockaddr_in& remote_addr);
+    ~UdpCommIO() override;
 
-    bool client_open(IcommEndpointType *src, IcommEndpointType *dst) override;
-
-    bool recv(char* data, int datalen, int* recv_datalen) override;
     bool send(const char* data, int datalen, int* send_datalen) override;
-
+    bool recv(char* data, int datalen, int* recv_datalen) override;
     bool close() override;
+};
 
+class UdpClient : public ICommClient {
+private:
+    struct sockaddr_in local_addr; // ローカルのアドレス情報
+
+public:
+    UdpClient();
+    ~UdpClient() override;
+
+    ICommIO* client_open(IcommEndpointType *src, IcommEndpointType *dst) override;
+};
+
+class UdpServer : public ICommServer {
+private:
+    struct sockaddr_in local_addr; // ローカルのアドレス情報
+
+public:
+    UdpServer();
+    ~UdpServer() override;
+
+    ICommIO* server_open(IcommEndpointType *endpoint) override;
 };
 
 } // namespace hako::px4::comm
