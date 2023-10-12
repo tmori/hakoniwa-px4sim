@@ -6,4 +6,6 @@
 #define MAVLINK_CONFIG_SYSTEM_ID        2
 #define MAVLINK_CONFIG_COMPONENT_ID     0
 
+#define MAVLINK_CONFIG_VERSION          3
+
 #endif /* _MAVLINK_CONFIG_HPP_ */

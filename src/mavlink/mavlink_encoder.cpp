@@ -55,7 +55,19 @@ bool mavlink_encode_message(mavlink_message_t *msg, const MavlinkDecodedMessage 
                 message->data.command_long.param7
             );
             return true;
-        
+        case MAVLINK_MSG_TYPE_ACK:
+            mavlink_msg_command_ack_pack(
+                MAVLINK_CONFIG_SYSTEM_ID, 
+                MAVLINK_CONFIG_COMPONENT_ID, 
+                msg, 
+                message->data.ack.command,
+                message->data.ack.result,
+                message->data.ack.progress,
+                message->data.ack.target_system,
+                message->data.ack.target_component,
+                message->data.ack.result_param2
+            );
+            return true;
         default:
             std::cerr << "Unsupported message type for encoding: " << message->type << std::endl;
             return false;
