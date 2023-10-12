@@ -68,6 +68,29 @@ bool mavlink_encode_message(mavlink_message_t *msg, const MavlinkDecodedMessage 
                 message->data.ack.result_param2
             );
             return true;
+        case MAVLINK_MSG_TYPE_HIL_SENSOR:
+            mavlink_msg_hil_sensor_pack(
+                MAVLINK_CONFIG_SYSTEM_ID, 
+                MAVLINK_CONFIG_COMPONENT_ID, 
+                msg, 
+                message->data.sensor.time_usec,
+                message->data.sensor.xacc,
+                message->data.sensor.yacc,
+                message->data.sensor.zacc,
+                message->data.sensor.xgyro,
+                message->data.sensor.ygyro,
+                message->data.sensor.zgyro,
+                message->data.sensor.xmag,
+                message->data.sensor.ymag,
+                message->data.sensor.zmag,
+                message->data.sensor.abs_pressure,
+                message->data.sensor.diff_pressure,
+                message->data.sensor.pressure_alt,
+                message->data.sensor.temperature,
+                message->data.sensor.fields_updated,
+                message->data.sensor.id
+            );
+            return true;
         default:
             std::cerr << "Unsupported message type for encoding: " << message->type << std::endl;
             return false;
