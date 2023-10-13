@@ -93,7 +93,7 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector)
     send_message(clientConnector, message);
 }
 
-
+#if 0
 static void send_ack(hako::px4::comm::ICommIO &clientConnector, 
                      uint16_t command, 
                      uint8_t result, 
@@ -113,6 +113,8 @@ static void send_ack(hako::px4::comm::ICommIO &clientConnector,
     send_message(clientConnector, message);
 
 }
+#endif
+
 static void *receiver_thread(void *arg)
 {
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
@@ -169,17 +171,14 @@ static void *receiver_thread(void *arg)
 
 int main(int argc, char* argv[]) 
 {
-    if(argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <remote_ip> <remote_port> <server_ip> <server_port>" << std::endl;
+    if(argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port>" << std::endl;
         return -1;
     }
 
-    const char* remoteIp = argv[1];
-    int remotePort = std::atoi(argv[2]);
-    const char* serverIp = argv[3];
-    int serverPort = std::atoi(argv[4]);
+    const char* serverIp = argv[1];
+    int serverPort = std::atoi(argv[2]);
 
-    hako::px4::comm::IcommEndpointType remoteEndpoint = { remoteIp, remotePort };
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
     hako::px4::comm::TcpServer server;
@@ -187,7 +186,7 @@ int main(int argc, char* argv[])
     auto comm_io = server.server_open(&serverEndpoint);
     if (comm_io == nullptr) 
     {
-        std::cerr << "Failed to open UDP client" << std::endl;
+        std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
     send_heartbeat(*comm_io);

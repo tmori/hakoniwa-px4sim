@@ -31,7 +31,14 @@ bool mavlink_get_message(mavlink_message_t *msg, MavlinkDecodedMessage *message)
             message->type = MAVLINK_MSG_TYPE_LONG;
             mavlink_msg_command_long_decode(msg, &message->data.command_long);
             return true;
-        }        default:
+        }
+        case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+        {
+            message->type = MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS;
+            mavlink_msg_hil_actuator_controls_decode(msg, &message->data.hil_actuator_controls);
+            return true;
+        }
+        default:
             message->type = MAVLINK_MSG_TYPE_UNKNOWN;
             return false;
     }
