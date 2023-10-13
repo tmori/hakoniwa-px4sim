@@ -34,11 +34,11 @@ static void send_heartbeat(hako::px4::comm::ICommIO &clientConnector)
     // HEARTBEATメッセージの準備
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HEARTBEAT;
-    message.data.heartbeat.type = MAV_TYPE_GCS;
-    message.data.heartbeat.autopilot = MAV_AUTOPILOT_INVALID;
-    message.data.heartbeat.base_mode = MAV_MODE_FLAG_HIL_ENABLED;
+    message.data.heartbeat.type = MAV_TYPE_GENERIC;
+    message.data.heartbeat.autopilot = 0;
+    message.data.heartbeat.base_mode = 0;
     message.data.heartbeat.custom_mode = 0;
-    message.data.heartbeat.system_status = MAV_STATE_STANDBY;
+    message.data.heartbeat.system_status = 0;
 
     send_message(clientConnector, message);
 }
@@ -66,8 +66,8 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
     message.data.hil_state_quaternion.rollspeed = 0.0;
     message.data.hil_state_quaternion.pitchspeed = 0.0;
     message.data.hil_state_quaternion.yawspeed = 0.0;
-    message.data.hil_state_quaternion.lat = 0;
-    message.data.hil_state_quaternion.lon = 0;
+    message.data.hil_state_quaternion.lat = 463700; //4c	52	40	1c
+    message.data.hil_state_quaternion.lon = 337732; //44	f4	17	5
     message.data.hil_state_quaternion.alt = 0;
     message.data.hil_state_quaternion.vx = 0;
     message.data.hil_state_quaternion.vy = 0;
@@ -88,18 +88,18 @@ static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t tim
     message.data.hil_gps.time_usec = time_usec;
     // 以下の値は固定値として設定
     message.data.hil_gps.fix_type = 3;  // GPS_FIX_TYPE_3D_FIX
-    message.data.hil_gps.lat = 0;
-    message.data.hil_gps.lon = 0;
-    message.data.hil_gps.alt = 0;
-    message.data.hil_gps.eph = 0;
-    message.data.hil_gps.epv = 0;
+    message.data.hil_gps.lat = 463700;
+    message.data.hil_gps.lon = 337732;
+    message.data.hil_gps.alt = 1905;
+    message.data.hil_gps.eph = 6249;
+    message.data.hil_gps.epv = 6253;
     message.data.hil_gps.vel = 0;
     message.data.hil_gps.vn = 0;
     message.data.hil_gps.ve = 0;
     message.data.hil_gps.vd = 0;
     message.data.hil_gps.cog = 0;
     message.data.hil_gps.satellites_visible = 0;
-    message.data.hil_gps.id = 0;
+    message.data.hil_gps.id = 0xa;
     message.data.hil_gps.yaw = 0;
 
     send_message(clientConnector, message);
@@ -145,10 +145,10 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
     message.data.sensor.xmag = 0.0f;
     message.data.sensor.ymag = 0.0f;
     message.data.sensor.zmag = 0.0f;
-    message.data.sensor.abs_pressure = 1013.25f;
+    message.data.sensor.abs_pressure = 999.9375f;
     message.data.sensor.diff_pressure = 0.0f;
-    message.data.sensor.pressure_alt = 0.0f;
-    message.data.sensor.temperature = 20.0f;
+    message.data.sensor.pressure_alt = 247.921875f;
+    message.data.sensor.temperature = 0.0f;
 
     message.data.sensor.fields_updated = fields_updated_rotation; 
 
