@@ -90,7 +90,7 @@ ICommIO* TcpServer::server_open(IcommEndpointType *endpoint) {
 }
 
 
-#define MAVLINK_HEADER_LEN  10
+#define MAVLINK_HEADER_LEN  9
 bool TcpCommIO::recv(char* data, int datalen, int* recv_datalen) {
     // see: http://mavlink.io/en/guide/serialization.html
 
@@ -111,7 +111,7 @@ bool TcpCommIO::recv(char* data, int datalen, int* recv_datalen) {
         printf("header[%d] = 0x%x\n", i, header[i]);
     }
     // Parse header to get packet length (assuming packet length is at offset 1)
-    int packetlen = static_cast<unsigned char>(header[1]) + 1 /* CRC */ + 13 /* Signature */;
+    int packetlen = static_cast<unsigned char>(header[1]) + 2 /* CRC */ + 1 /* Signature */;
 
     // Check if datalen is sufficient to hold header and packet data
     if (datalen < MAVLINK_HEADER_LEN + packetlen) {

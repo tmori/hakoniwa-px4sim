@@ -280,11 +280,11 @@ int main(int argc, char* argv[])
             send_system_time(*comm_io, time_usec, count * 20);  // 仮にtime_boot_msをcount * 20とします
         }
         if ((count % 2) == 0) {  // 頻度を50Hzに変更
-            //send_sensor(*comm_io, time_usec);
+            send_sensor(*comm_io, time_usec);
         }
         if ((count % 5) == 0) {  // 頻度を10Hzに変更
-            //send_hil_gps(*comm_io, time_usec);
-            //send_hil_state_quaternion(*comm_io, time_usec);
+            send_hil_gps(*comm_io, time_usec);
+            send_hil_state_quaternion(*comm_io, time_usec);
         }
 
         usleep(20 * 1000);  // 50Hzに更新する場合、20msごとにsleepします。
