@@ -11,9 +11,8 @@ bool mavlink_decode(const char* packet, int packet_len, mavlink_message_t *msg)
         if(result) {
             messageReceived = true;
         }
-        //std::cout << "parse result[ " << i << " ] = " << result << std::endl;
     }
-
+    std::cout << "mavlink_decode result = " << messageReceived << std::endl;
     return messageReceived;
 }
 

@@ -107,9 +107,11 @@ bool TcpCommIO::recv(char* data, int datalen, int* recv_datalen) {
             return false;
         }
     }
-
+    for (int i = 0; i < 10; i++) {
+        printf("header[%d] = 0x%x\n", i, header[i]);
+    }
     // Parse header to get packet length (assuming packet length is at offset 1)
-    int packetlen = static_cast<unsigned char>(header[1]);
+    int packetlen = static_cast<unsigned char>(header[1]) + 1 /* CRC */ + 13 /* Signature */;
 
     // Check if datalen is sufficient to hold header and packet data
     if (datalen < MAVLINK_HEADER_LEN + packetlen) {
