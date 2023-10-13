@@ -42,9 +42,72 @@ static void send_heartbeat(hako::px4::comm::ICommIO &clientConnector)
 
     send_message(clientConnector, message);
 }
+static void send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t time_unix_usec, uint32_t time_boot_ms)
+{
+    // SYSTEM_TIMEメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_SYSTEM_TIME;
+    message.data.system_time.time_unix_usec = time_unix_usec;
+    message.data.system_time.time_boot_ms = time_boot_ms;
+
+    send_message(clientConnector, message);
+}
+static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    // HIL_STATE_QUATERNIONメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
+    message.data.hil_state_quaternion.time_usec = time_usec;
+    // 以下の値は固定値として設定
+    message.data.hil_state_quaternion.attitude_quaternion[0] = 1.0;
+    message.data.hil_state_quaternion.attitude_quaternion[1] = 0.0;
+    message.data.hil_state_quaternion.attitude_quaternion[2] = 0.0;
+    message.data.hil_state_quaternion.attitude_quaternion[3] = 0.0;
+    message.data.hil_state_quaternion.rollspeed = 0.0;
+    message.data.hil_state_quaternion.pitchspeed = 0.0;
+    message.data.hil_state_quaternion.yawspeed = 0.0;
+    message.data.hil_state_quaternion.lat = 0;
+    message.data.hil_state_quaternion.lon = 0;
+    message.data.hil_state_quaternion.alt = 0;
+    message.data.hil_state_quaternion.vx = 0;
+    message.data.hil_state_quaternion.vy = 0;
+    message.data.hil_state_quaternion.vz = 0;
+    message.data.hil_state_quaternion.ind_airspeed = 0;
+    message.data.hil_state_quaternion.true_airspeed = 0;
+    message.data.hil_state_quaternion.xacc = 0;
+    message.data.hil_state_quaternion.yacc = 0;
+    message.data.hil_state_quaternion.zacc = 0;
+
+    send_message(clientConnector, message);
+}
+static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    // HIL_GPSメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_GPS;
+    message.data.hil_gps.time_usec = time_usec;
+    // 以下の値は固定値として設定
+    message.data.hil_gps.fix_type = 3;  // GPS_FIX_TYPE_3D_FIX
+    message.data.hil_gps.lat = 0;
+    message.data.hil_gps.lon = 0;
+    message.data.hil_gps.alt = 0;
+    message.data.hil_gps.eph = 0;
+    message.data.hil_gps.epv = 0;
+    message.data.hil_gps.vel = 0;
+    message.data.hil_gps.vn = 0;
+    message.data.hil_gps.ve = 0;
+    message.data.hil_gps.vd = 0;
+    message.data.hil_gps.cog = 0;
+    message.data.hil_gps.satellites_visible = 0;
+    message.data.hil_gps.id = 0;
+    message.data.hil_gps.yaw = 0;
+
+    send_message(clientConnector, message);
+}
+
 static auto start_time = std::chrono::system_clock::now();
 
-static void send_sensor(hako::px4::comm::ICommIO &clientConnector)
+static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
     static float test_gyro = 0.0f;
     // Static variables inside function scope
@@ -55,9 +118,8 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector)
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
 
     auto now = std::chrono::system_clock::now();
-    auto duration_since_epoch = now.time_since_epoch();
-    uint64_t microseconds_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
-    message.data.sensor.time_usec = microseconds_since_epoch;
+
+    message.data.sensor.time_usec = time_usec;
 
     // Calculate the time difference between now and the last time this function was called
     auto delta_time = now - prev_time;
@@ -155,7 +217,17 @@ static void *receiver_thread(void *arg)
                         //send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
                         //    message.data.command_long.target_system, message.data.command_long.target_component);
                         break;
-                    
+                    case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
+                        std::cout << "  Type: HIL_ACTUATOR_CONTROLS" << std::endl;
+                        std::cout << "  Time_usec: " << message.data.hil_actuator_controls.time_usec << std::endl;
+                        std::cout << "  Mode: " << static_cast<int>(message.data.hil_actuator_controls.mode) << std::endl;
+                        std::cout << "  Flags: " << message.data.hil_actuator_controls.flags << std::endl;
+                        std::cout << "  Controls: ";
+                        for(int i = 0; i < 8; ++i) {  // Assuming there are 8 controls
+                            std::cout << message.data.hil_actuator_controls.controls[i] << " ";
+                        }
+                        std::cout << std::endl;
+                        break;                    
                     default:
                         std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
                         break;
@@ -199,17 +271,25 @@ int main(int argc, char* argv[])
 
     int count = 0;
     while (true) {
+        auto now = std::chrono::system_clock::now();
+        auto duration_since_epoch = now.time_since_epoch();
+        uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+
         if ((count % 10) == 0) {
             send_heartbeat(*comm_io);
+            send_system_time(*comm_io, time_usec, count * 20);  // 仮にtime_boot_msをcount * 20とします
         }
-        if ((count % 2) == 0) { // 頻度を50Hzに変更してみてください。
-            send_sensor(*comm_io);
+        if ((count % 2) == 0) {  // 頻度を50Hzに変更
+            send_sensor(*comm_io, time_usec);
+        }
+        if ((count % 5) == 0) {  // 頻度を10Hzに変更
+            send_hil_gps(*comm_io, time_usec);
+            send_hil_state_quaternion(*comm_io, time_usec);
         }
 
         usleep(20 * 1000);  // 50Hzに更新する場合、20msごとにsleepします。
         count++;
     }
-
 
     comm_io->close();
     return 0;
