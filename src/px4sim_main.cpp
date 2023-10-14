@@ -108,19 +108,19 @@ static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t tim
     message.type = MAVLINK_MSG_TYPE_HIL_GPS;
     message.data.hil_gps.time_usec = time_usec;
     // 以下の値は固定値として設定
-    message.data.hil_gps.fix_type = 3;  // GPS_FIX_TYPE_3D_FIX
-    message.data.hil_gps.lat = 463700;
-    message.data.hil_gps.lon = 337732;
-    message.data.hil_gps.alt = 1905;
-    message.data.hil_gps.eph = 6249;
-    message.data.hil_gps.epv = 6253;
+    message.data.hil_gps.fix_type = 0;  // GPS_FIX_TYPE_3D_FIX
+    message.data.hil_gps.lat = 473977418;
+    message.data.hil_gps.lon = 85455939;
+    message.data.hil_gps.alt = 488008;
+    message.data.hil_gps.eph = 9778;
+    message.data.hil_gps.epv = 9778;
     message.data.hil_gps.vel = 0;
     message.data.hil_gps.vn = 0;
     message.data.hil_gps.ve = 0;
     message.data.hil_gps.vd = 0;
     message.data.hil_gps.cog = 0;
     message.data.hil_gps.satellites_visible = 0;
-    message.data.hil_gps.id = 0xa;
+    message.data.hil_gps.id = 0;
     message.data.hil_gps.yaw = 0;
 
     send_message(clientConnector, message);
@@ -137,41 +137,22 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
 
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
-
-    auto now = std::chrono::system_clock::now();
-
     message.data.sensor.time_usec = time_usec;
-
-    // Calculate the time difference between now and the last time this function was called
-    auto delta_time = now - prev_time;
-    auto delta_time_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(delta_time);
-    prev_time = now;
-
-    // Rotate fields_updated bits based on a desired interval
-    if(delta_time_microseconds.count() > 500000) { // for example, every 500ms
-        fields_updated_rotation = (fields_updated_rotation << 1) | (fields_updated_rotation >> 15);  // 16-bit rotation
-    }
-    if(delta_time_microseconds.count() > 40000) { 
-        fields_updated_rotation |= 0b111;
-    }
-    // 微小な変動を加える
-    test_gyro += 0.001f;
-
-    message.data.sensor.xacc = 0.0f;
-    message.data.sensor.yacc = 0.0f;
-    message.data.sensor.zacc = 0.0f;
-    message.data.sensor.xgyro = test_gyro;
-    message.data.sensor.ygyro = test_gyro;
-    message.data.sensor.zgyro = test_gyro;
-    message.data.sensor.xmag = 0.0f;
-    message.data.sensor.ymag = 0.0f;
-    message.data.sensor.zmag = 0.0f;
-    message.data.sensor.abs_pressure = 999.9375f;
+    message.data.sensor.xacc = -0.0785347;
+    message.data.sensor.yacc = 0.00118181;
+    message.data.sensor.zacc = -9.83317;
+    message.data.sensor.xgyro = 0.00286057;
+    message.data.sensor.ygyro = -0.00736865;
+    message.data.sensor.zgyro = -0.00834229;
+    message.data.sensor.xmag = 0.217065;
+    message.data.sensor.ymag = 0.0063418;
+    message.data.sensor.zmag = 0.422639;
+    message.data.sensor.abs_pressure = 956.025;
     message.data.sensor.diff_pressure = 0.0f;
-    message.data.sensor.pressure_alt = 247.921875f;
+    message.data.sensor.pressure_alt = 0;
     message.data.sensor.temperature = 0.0f;
 
-    message.data.sensor.fields_updated = fields_updated_rotation; 
+    message.data.sensor.fields_updated = 7167; 
     message.data.sensor.id = 0;
 
     send_message(clientConnector, message);
@@ -266,7 +247,8 @@ static void *receiver_thread(void *arg)
                         std::cout << "  Diff_pressure: " << message.data.sensor.diff_pressure << std::endl;
                         std::cout << "  temparature: " << message.data.sensor.temperature << std::endl;
                         std::cout << "  fileds_updated: " << message.data.sensor.fields_updated << std::endl;
-                        std::cout << "  id: " << message.data.sensor.id << std::endl;
+                        //std::cout << "  id: " << message.data.sensor.id << std::endl;
+                        printf(" id: 0x%x\n", message.data.sensor.id);
                         break;
                     case MAVLINK_MSG_TYPE_SYSTEM_TIME:
                         std::cout << "  Type: SYSTEM_TIME" << std::endl;
@@ -277,6 +259,7 @@ static void *receiver_thread(void *arg)
                     case MAVLINK_MSG_TYPE_HIL_GPS:
                         std::cout << "  Type: HIL_GPS" << std::endl;
                         std::cout << "  Time stamp: " << message.data.hil_gps.time_usec << std::endl;
+                        std::cout << "  fix_type: " << message.data.hil_gps.fix_type << std::endl;
                         std::cout << "  Latitude: " << message.data.hil_gps.lat << std::endl;
                         std::cout << "  Longitude: " << message.data.hil_gps.lon << std::endl;
                         std::cout << "  alt: " << message.data.hil_gps.alt << std::endl;
@@ -287,7 +270,8 @@ static void *receiver_thread(void *arg)
                         std::cout << "  vd: " << message.data.hil_gps.vd << std::endl;
                         std::cout << "  cog: " << message.data.hil_gps.cog << std::endl;
                         std::cout << "  satelites_visible: " << message.data.hil_gps.satellites_visible << std::endl;
-                        std::cout << "  id: " << message.data.hil_gps.id << std::endl;
+                        //std::cout << "  id: " << message.data.hil_gps.id << std::endl;
+                        printf(" id: 0x%x\n", message.data.hil_gps.id);
                         std::cout << "  yaw: " << message.data.hil_gps.yaw << std::endl;
 
                         break;
@@ -316,18 +300,19 @@ int main(int argc, char* argv[])
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
-    //hako::px4::comm::TcpServer server;
+#if 1
+    hako::px4::comm::TcpServer server;
+    auto comm_io = server.server_open(&serverEndpoint);
+#else
     hako::px4::comm::TcpClient client;
-
-    //auto comm_io = server.server_open(&serverEndpoint);
     auto comm_io = client.client_open(nullptr, &serverEndpoint);
+#endif
     if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
-    send_command_long(*comm_io);
-    //send_heartbeat(*comm_io);
+    //send_command_long(*comm_io);
 
     pthread_t thread;
     if (pthread_create(&thread, NULL, receiver_thread, comm_io) != 0) {
@@ -341,18 +326,20 @@ int main(int argc, char* argv[])
         auto duration_since_epoch = now.time_since_epoch();
         uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
 
-        if ((count % 10) == 0) {
+        if ((count % 1000) == 0) {
             send_heartbeat(*comm_io);
-            send_system_time(*comm_io, time_usec, count * 20);  // 仮にtime_boot_msをcount * 20とします
         }
-        if ((count % 2) == 0) {  // 頻度を50Hzに変更
-            //send_sensor(*comm_io, time_usec);
+        if ((count % 4000) == 0) {
+            send_system_time(*comm_io, time_usec, count);
         }
-        if ((count % 5) == 0) {  // 頻度を10Hzに変更
-            //send_hil_gps(*comm_io, time_usec);
+        if ((count % 1) == 0) {  // 頻度を1kHzに変更
+            send_sensor(*comm_io, time_usec);
+        }
+        if ((count % 52) == 0) { 
+            send_hil_gps(*comm_io, time_usec);
             //send_hil_state_quaternion(*comm_io, time_usec);
         }
-        usleep(20 * 1000);  // 50Hzに更新する場合、20msごとにsleepします。
+        usleep(1 * 1000);  // 1msec
         count++;
     }
 
