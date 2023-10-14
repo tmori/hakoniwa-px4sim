@@ -5,7 +5,7 @@
 #include <cstdlib> // for std::atoi
 #include <pthread.h>
 #include <unistd.h>
-
+#include <random>
 #include <chrono> // For obtaining the current timestamp
 
 static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecodedMessage &message)
@@ -103,15 +103,18 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
 }
 static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
+    static std::default_random_engine generator;
+    static std::normal_distribution<float> distribution(0.0, 0.01); // 平均: 0, 標準偏差: 0.01
+
     // HIL_GPSメッセージの準備
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_GPS;
     message.data.hil_gps.time_usec = time_usec;
     // 以下の値は固定値として設定
     message.data.hil_gps.fix_type = 0;  // GPS_FIX_TYPE_3D_FIX
-    message.data.hil_gps.lat = 473977418;
-    message.data.hil_gps.lon = 85455939;
-    message.data.hil_gps.alt = 488008;
+    message.data.hil_gps.lat = 473977418 + distribution(generator);
+    message.data.hil_gps.lon = 85455939 + distribution(generator);
+    message.data.hil_gps.alt = 488008 + distribution(generator);
     message.data.hil_gps.eph = 9778;
     message.data.hil_gps.epv = 9778;
     message.data.hil_gps.vel = 0;
@@ -130,27 +133,25 @@ static auto start_time = std::chrono::system_clock::now();
 
 static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
-    static float test_gyro = 0.0f;
-    // Static variables inside function scope
-    static uint32_t fields_updated_rotation = 0x1;
-    static auto prev_time = std::chrono::system_clock::now();
-
+    // Random noise generator setup
+    static std::default_random_engine generator;
+    static std::normal_distribution<float> distribution(0.0, 0.01); // mean: 0, std_dev: 0.01    
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
     message.data.sensor.time_usec = time_usec;
-    message.data.sensor.xacc = -0.0785347;
-    message.data.sensor.yacc = 0.00118181;
-    message.data.sensor.zacc = -9.83317;
-    message.data.sensor.xgyro = 0.00286057;
-    message.data.sensor.ygyro = -0.00736865;
-    message.data.sensor.zgyro = -0.00834229;
-    message.data.sensor.xmag = 0.217065;
-    message.data.sensor.ymag = 0.0063418;
-    message.data.sensor.zmag = 0.422639;
-    message.data.sensor.abs_pressure = 956.025;
+    message.data.sensor.xacc = -0.0785347 + distribution(generator);
+    message.data.sensor.yacc = 0.00118181 + distribution(generator);
+    message.data.sensor.zacc = -9.83317 + distribution(generator);
+    message.data.sensor.xgyro = 0.00286057 + distribution(generator);
+    message.data.sensor.ygyro = -0.00736865 + distribution(generator);
+    message.data.sensor.zgyro = -0.00834229 + distribution(generator);
+    message.data.sensor.xmag = 0.217065 + distribution(generator);
+    message.data.sensor.ymag = 0.0063418 + distribution(generator);
+    message.data.sensor.zmag = 0.422639 + distribution(generator);
+    message.data.sensor.abs_pressure = 956.025 + distribution(generator);
     message.data.sensor.diff_pressure = 0.0f;
     message.data.sensor.pressure_alt = 0;
-    message.data.sensor.temperature = 0.0f;
+    message.data.sensor.temperature = 0.0f + distribution(generator);
 
     message.data.sensor.fields_updated = 7167; 
     message.data.sensor.id = 0;
