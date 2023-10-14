@@ -37,6 +37,24 @@ bool mavlink_get_message(mavlink_message_t *msg, MavlinkDecodedMessage *message)
             mavlink_msg_hil_actuator_controls_decode(msg, &message->data.hil_actuator_controls);
             return true;
         }
+        case MAVLINK_MSG_ID_HIL_SENSOR:
+        {
+            message->type = MAVLINK_MSG_TYPE_HIL_SENSOR;
+            mavlink_msg_hil_sensor_decode(msg, &message->data.sensor);
+            return true;
+        }
+        case MAVLINK_MSG_ID_SYSTEM_TIME:
+        {
+            message->type = MAVLINK_MSG_TYPE_SYSTEM_TIME;
+            mavlink_msg_system_time_decode(msg, &message->data.system_time);
+            return true;
+        }
+        case MAVLINK_MSG_ID_HIL_GPS:
+        {
+            message->type = MAVLINK_MSG_TYPE_HIL_GPS;
+            mavlink_msg_hil_gps_decode(msg, &message->data.hil_gps);
+            return true;
+        }        
         default:
             message->type = MAVLINK_MSG_TYPE_UNKNOWN;
             return false;
