@@ -12,7 +12,7 @@ bool mavlink_decode(const char* packet, int packet_len, mavlink_message_t *msg)
             messageReceived = true;
         }
     }
-    std::cout << "mavlink_decode result = " << messageReceived << std::endl;
+    //std::cout << "mavlink_decode result = " << messageReceived << std::endl;
     return messageReceived;
 }
 

@@ -24,17 +24,6 @@ ICommIO* TcpClient::client_open(IcommEndpointType *src, IcommEndpointType *dst) 
         return nullptr;
     }
 
-    struct sockaddr_in local_addr;
-    memset(&local_addr, 0, sizeof(local_addr));
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = inet_addr(src->ipaddr);
-    local_addr.sin_port = htons(src->portno);
-    if (bind(sockfd, (struct sockaddr*)&local_addr, sizeof(local_addr)) < 0) {
-        std::cout << "Failed to bind socket: " << strerror(errno) << std::endl;
-        ::close(sockfd);
-        return nullptr;
-    }
-
     struct sockaddr_in remote_addr;
     memset(&remote_addr, 0, sizeof(remote_addr));
     remote_addr.sin_family = AF_INET;
@@ -107,9 +96,11 @@ bool TcpCommIO::recv(char* data, int datalen, int* recv_datalen) {
             return false;
         }
     }
+#if 0
     for (int i = 0; i < 10; i++) {
         printf("header[%d] = 0x%x\n", i, header[i]);
     }
+#endif
     // Parse header to get packet length (assuming packet length is at offset 1)
     int packetlen = static_cast<unsigned char>(header[1]) + 2 /* CRC */ + 1 /* Signature */;
 

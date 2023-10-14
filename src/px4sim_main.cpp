@@ -151,6 +151,7 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
     message.data.sensor.temperature = 0.0f;
 
     message.data.sensor.fields_updated = fields_updated_rotation; 
+    message.data.sensor.id = 0;
 
     send_message(clientConnector, message);
 }
@@ -253,9 +254,11 @@ int main(int argc, char* argv[])
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
-    hako::px4::comm::TcpServer server;
+    //hako::px4::comm::TcpServer server;
+    hako::px4::comm::TcpClient client;
 
-    auto comm_io = server.server_open(&serverEndpoint);
+    //auto comm_io = server.server_open(&serverEndpoint);
+    auto comm_io = client.client_open(nullptr, &serverEndpoint);
     if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open TCP client" << std::endl;
@@ -280,13 +283,12 @@ int main(int argc, char* argv[])
             send_system_time(*comm_io, time_usec, count * 20);  // 仮にtime_boot_msをcount * 20とします
         }
         if ((count % 2) == 0) {  // 頻度を50Hzに変更
-            send_sensor(*comm_io, time_usec);
+            //send_sensor(*comm_io, time_usec);
         }
         if ((count % 5) == 0) {  // 頻度を10Hzに変更
-            send_hil_gps(*comm_io, time_usec);
-            send_hil_state_quaternion(*comm_io, time_usec);
+            //send_hil_gps(*comm_io, time_usec);
+            //send_hil_state_quaternion(*comm_io, time_usec);
         }
-
         usleep(20 * 1000);  // 50Hzに更新する場合、20msごとにsleepします。
         count++;
     }
