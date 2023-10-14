@@ -30,4 +30,41 @@ typedef struct {
     } data;
 } MavlinkDecodedMessage;
 
+
+typedef struct {
+    uint32_t dataLength;         // 受信データ長: 4バイト
+    uint64_t relativeTimestamp;  // 受信相対時間: 8バイト
+    uint8_t  data[8];           // 受信データ（可変：受信データ長）
+} MavlinkCaptureDataType;
+
+/*
+ * キャプチャデータのデータ構造
+ */
+typedef struct {
+    /*
+     * キャプチャ開始した時間がセットされる。
+     * セットされる値は相対時間であり。１個目のデータの場合は０となる。
+     * 単位：usec
+     */
+    uint64_t start_time;
+    /*
+     * 格納されているパケット数
+     */
+    uint64_t packet_num;
+    /*
+     * 格納されているパケットの層データサイズ（単位：バイト）
+     */
+    uint64_t total_size;
+    /*
+     * 保存用ファイルディスクリプタ
+     */
+    int save_file;
+    uint64_t memsize;
+    uint64_t offset;
+    uint8_t *data;
+} MavlinkCaptureControllerType;
+
+#define MAVLINK_CAPTURE_INC_DATA_SIZE   8192 /* メモリ拡張サイズ（単位：バイト） */
+#define MAVLINK_CAPTURE_SAVE_FILEPATH "./capture.bin"
+
 #endif /* _MAVLIN_MSG_TYPES_HPP_ */
