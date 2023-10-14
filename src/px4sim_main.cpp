@@ -29,6 +29,7 @@ static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
         }
     }
 }
+#if 0
 static void send_command_long(hako::px4::comm::ICommIO &clientConnector)
 {
     MavlinkDecodedMessage message;
@@ -37,10 +38,10 @@ static void send_command_long(hako::px4::comm::ICommIO &clientConnector)
     // Setting up the fields for COMMAND_LONG
     message.data.command_long.target_system = 0; // The system which should execute the command, for example, 1 for the first MAV
     message.data.command_long.target_component = 0; // The component which should execute the command, for example, 0 for a generic component
-    message.data.command_long.command = 511;
+    message.data.command_long.command = 0x4246;
     message.data.command_long.confirmation = 0; // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-    message.data.command_long.param1 = 115.0f; // Parameter 1, as defined by MAV_CMD enum
-    message.data.command_long.param2 = 5000.0f; // Parameter 2, as defined by MAV_CMD enum
+    message.data.command_long.param1 = 0x9c40; // Parameter 1, as defined by MAV_CMD enum
+    message.data.command_long.param2 = 0x45; // Parameter 2, as defined by MAV_CMD enum
     message.data.command_long.param3 = 0; // Parameter 3, as defined by MAV_CMD enum
     message.data.command_long.param4 = 0; // Parameter 4, as defined by MAV_CMD enum
     message.data.command_long.param5 = 0; // Parameter 5, as defined by MAV_CMD enum
@@ -75,28 +76,26 @@ static void send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t
 }
 static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
-    static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 0); // 平均: 0, 標準偏差: 0.01
     // HIL_STATE_QUATERNIONメッセージの準備
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
     message.data.hil_state_quaternion.time_usec = time_usec;
     // 以下の値は固定値として設定
-    message.data.hil_state_quaternion.attitude_quaternion[0] = 1.0f;
+    message.data.hil_state_quaternion.attitude_quaternion[0] = 1.0;
     message.data.hil_state_quaternion.attitude_quaternion[1] = 0.0;
     message.data.hil_state_quaternion.attitude_quaternion[2] = 0.0;
     message.data.hil_state_quaternion.attitude_quaternion[3] = 0.0;
     message.data.hil_state_quaternion.rollspeed = 0.0;
     message.data.hil_state_quaternion.pitchspeed = 0.0;
     message.data.hil_state_quaternion.yawspeed = 0.0;
-    message.data.hil_state_quaternion.lat = 473977418 + distribution(generator);
-    message.data.hil_state_quaternion.lon = 85455939 + distribution(generator);
+    message.data.hil_state_quaternion.lat = 463700; //4c	52	40	1c
+    message.data.hil_state_quaternion.lon = 337732; //44	f4	17	5
     message.data.hil_state_quaternion.alt = 0;
     message.data.hil_state_quaternion.vx = 0;
     message.data.hil_state_quaternion.vy = 0;
     message.data.hil_state_quaternion.vz = 0;
     message.data.hil_state_quaternion.ind_airspeed = 0;
-    message.data.hil_state_quaternion.true_airspeed = 1 + distribution(generator);
+    message.data.hil_state_quaternion.true_airspeed = 0;
     message.data.hil_state_quaternion.xacc = 0;
     message.data.hil_state_quaternion.yacc = 0;
     message.data.hil_state_quaternion.zacc = 0;
@@ -106,7 +105,7 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
 static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 0); // 平均: 0, 標準偏差: 0.01
+    static std::normal_distribution<float> distribution(0.0, 0.01); // 平均: 0, 標準偏差: 0.01
 
     // HIL_GPSメッセージの準備
     MavlinkDecodedMessage message;
@@ -137,7 +136,7 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
 {
     // Random noise generator setup
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 0.001); // mean: 0, std_dev: 0.01    
+    static std::normal_distribution<float> distribution(0.0, 0.01); // mean: 0, std_dev: 0.01    
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
     message.data.sensor.time_usec = time_usec;
@@ -160,7 +159,7 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
 
     send_message(clientConnector, message);
 }
-
+#endif
 #if 0
 static void send_ack(hako::px4::comm::ICommIO &clientConnector, 
                      uint16_t command, 
@@ -183,6 +182,8 @@ static void send_ack(hako::px4::comm::ICommIO &clientConnector,
 }
 #endif
 
+static bool px4_data_hb_received = false;
+static bool px4_data_long_received = false;
 static void *receiver_thread(void *arg)
 {
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
@@ -194,7 +195,7 @@ static void *receiver_thread(void *arg)
             std::cout << "Received data with length: " << recvDataLen << std::endl;
             mavlink_message_t msg;
             bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
-            if (ret) 
+            if (ret)
             {
                 std::cout << "Decoded MAVLink message:" << std::endl;
                 std::cout << "  Message ID: " << msg.msgid << std::endl;
@@ -212,21 +213,17 @@ static void *receiver_thread(void *arg)
                         std::cout << "  Base mode: " << static_cast<int>(message.data.heartbeat.base_mode) << std::endl;
                         std::cout << "  System status: " << static_cast<int>(message.data.heartbeat.system_status) << std::endl;
                         std::cout << "  MAVLink version: " << static_cast<int>(message.data.heartbeat.mavlink_version) << std::endl;
+                        px4_data_hb_received = true;
                         break;
-                    
                     case MAVLINK_MSG_TYPE_LONG:
                         std::cout << "  Type: COMMAND_LONG" << std::endl;
                         std::cout << "  Target system: " << static_cast<int>(message.data.command_long.target_system) << std::endl;
                         std::cout << "  Target component: " << static_cast<int>(message.data.command_long.target_component) << std::endl;
                         std::cout << "  Command ID: " << message.data.command_long.command << std::endl;
                         std::cout << "  Confirmation: " << static_cast<int>(message.data.command_long.confirmation) << std::endl;
-                        std::cout << "  Param1: " << static_cast<float>(message.data.command_long.param1) << std::endl;
-                        std::cout << "  Param2: " << static_cast<float>(message.data.command_long.param2) << std::endl;
-                        std::cout << "  Param3: " << static_cast<float>(message.data.command_long.param3) << std::endl;
-                        std::cout << "  Param4: " << static_cast<float>(message.data.command_long.param4) << std::endl;
-                        std::cout << "  Param5: " << static_cast<float>(message.data.command_long.param5) << std::endl;
-                        std::cout << "  Param6: " << static_cast<float>(message.data.command_long.param6) << std::endl;
-                        std::cout << "  Param7: " << static_cast<float>(message.data.command_long.param7) << std::endl;
+                        //send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
+                        //    message.data.command_long.target_system, message.data.command_long.target_component);
+                        px4_data_long_received = true;
                         break;
                     case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
                         std::cout << "  Type: HIL_ACTUATOR_CONTROLS" << std::endl;
@@ -283,27 +280,6 @@ static void *receiver_thread(void *arg)
                         std::cout << "  yaw: " << message.data.hil_gps.yaw << std::endl;
 
                         break;
-                    case MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION:
-                        std::cout << "  Type: HIL_STATE_QUATERNION" << std::endl;
-                        std::cout << "  Time stamp: " << message.data.hil_state_quaternion.time_usec << std::endl;
-                        for (int i = 0; i < 4; i++) {
-                            printf("  attitude_quaternion[%d]: %f\n", i, message.data.hil_state_quaternion.attitude_quaternion[i]);
-                        }
-                        std::cout << "  rollspeed: " << message.data.hil_state_quaternion.rollspeed << std::endl;
-                        std::cout << "  pitchspeed: " << message.data.hil_state_quaternion.pitchspeed << std::endl;
-                        std::cout << "  yawspeed: " << message.data.hil_state_quaternion.yawspeed << std::endl;
-                        std::cout << "  lat: " << message.data.hil_state_quaternion.lat << std::endl;
-                        std::cout << "  lon: " << message.data.hil_state_quaternion.lon << std::endl;
-                        std::cout << "  alt: " << message.data.hil_state_quaternion.alt << std::endl;
-                        std::cout << "  vx: " << message.data.hil_state_quaternion.vx << std::endl;
-                        std::cout << "  vy: " << message.data.hil_state_quaternion.vy << std::endl;
-                        std::cout << "  vz: " << message.data.hil_state_quaternion.vz << std::endl;
-                        std::cout << "  ind_airspeed: " << message.data.hil_state_quaternion.ind_airspeed << std::endl;
-                        std::cout << "  true_airspeed: " << message.data.hil_state_quaternion.true_airspeed << std::endl;
-                        std::cout << "  xacc: " << message.data.hil_state_quaternion.xacc << std::endl;
-                        std::cout << "  yacc: " << message.data.hil_state_quaternion.yacc << std::endl;
-                        std::cout << "  zacc: " << message.data.hil_state_quaternion.zacc << std::endl;
-                        break;
                     default:
                         std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
                         break;
@@ -320,29 +296,32 @@ static void *receiver_thread(void *arg)
 int main(int argc, char* argv[]) 
 {
     if(argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << "<server_ip> <server_port> <mode={replay|capture}> "  << std::endl;
         return -1;
     }
-
+    bool replay_mode = true;
     const char* serverIp = argv[1];
     int serverPort = std::atoi(argv[2]);
+    const char* mode = argv[3];
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
-#if SIM_FOR_PX4 /* for px4 */
-    hako::px4::comm::TcpServer server;
-    auto comm_io = server.server_open(&serverEndpoint);
-#else /* for jmavlink */
-    hako::px4::comm::TcpClient client;
-    auto comm_io = client.client_open(nullptr, &serverEndpoint);
-    send_command_long(*comm_io);
-    send_heartbeat(*comm_io);
-#endif
+    hako::px4::comm::ICommIO *comm_io  = nullptr;
+    if (strcmp("replay", mode) == 0) {
+        hako::px4::comm::TcpServer server;
+        comm_io = server.server_open(&serverEndpoint);
+    }
+    else {
+        replay_mode = false;
+        hako::px4::comm::TcpClient client;
+        comm_io = client.client_open(nullptr, &serverEndpoint);
+    }
     if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
+    //send_command_long(*comm_io);
 
     pthread_t thread;
     if (pthread_create(&thread, NULL, receiver_thread, comm_io) != 0) {
@@ -350,29 +329,36 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    int count = 0;
+    //int count = 0;
     while (true) {
-        auto now = std::chrono::system_clock::now();
-        auto duration_since_epoch = now.time_since_epoch();
-        uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+        //auto now = std::chrono::system_clock::now();
+        //auto duration_since_epoch = now.time_since_epoch();
+        //uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
 
+        if (replay_mode == false) {
+            //capture mode
+            //nothing to do.
+        }
+        else {
+            //replay mode
+        }
+    #if 0
         if ((count % 1000) == 0) {
             send_heartbeat(*comm_io);
         }
-        if ((count % 3991) == 0) {
+        if ((count % 4000) == 0) {
             send_system_time(*comm_io, time_usec, count);
         }
-        if ((count % 4) == 0) {
+        if ((count % 1) == 0) {  // 頻度を1kHzに変更
             send_sensor(*comm_io, time_usec);
-        }
-        if ((count % 8) == 0) {
-            send_hil_state_quaternion(*comm_io, time_usec);
         }
         if ((count % 52) == 0) { 
             send_hil_gps(*comm_io, time_usec);
+            //send_hil_state_quaternion(*comm_io, time_usec);
         }
+    #endif
         usleep(1 * 1000);  // 1msec
-        count++;
+        //count++;
     }
 
     comm_io->close();
