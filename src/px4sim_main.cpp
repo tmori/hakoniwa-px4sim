@@ -29,6 +29,27 @@ static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
         }
     }
 }
+static void send_command_long(hako::px4::comm::ICommIO &clientConnector)
+{
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_LONG;
+    
+    // Setting up the fields for COMMAND_LONG
+    message.data.command_long.target_system = 0; // The system which should execute the command, for example, 1 for the first MAV
+    message.data.command_long.target_component = 0; // The component which should execute the command, for example, 0 for a generic component
+    message.data.command_long.command = 0x4246;
+    message.data.command_long.confirmation = 0; // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
+    message.data.command_long.param1 = 0x9c40; // Parameter 1, as defined by MAV_CMD enum
+    message.data.command_long.param2 = 0x45; // Parameter 2, as defined by MAV_CMD enum
+    message.data.command_long.param3 = 0; // Parameter 3, as defined by MAV_CMD enum
+    message.data.command_long.param4 = 0; // Parameter 4, as defined by MAV_CMD enum
+    message.data.command_long.param5 = 0; // Parameter 5, as defined by MAV_CMD enum
+    message.data.command_long.param6 = 0; // Parameter 6, as defined by MAV_CMD enum
+    message.data.command_long.param7 = 0; // Parameter 7, as defined by MAV_CMD enum
+    
+    send_message(clientConnector, message);
+}
+
 static void send_heartbeat(hako::px4::comm::ICommIO &clientConnector)
 {
     // HEARTBEATメッセージの準備
@@ -228,7 +249,28 @@ static void *receiver_thread(void *arg)
                             std::cout << message.data.hil_actuator_controls.controls[i] << " ";
                         }
                         std::cout << std::endl;
-                        break;                    
+                        break;
+                    case MAVLINK_MSG_TYPE_HIL_SENSOR:
+                        std::cout << "  Type: HIL_SENSOR" << std::endl;
+                        std::cout << "  Time stamp: " << message.data.sensor.time_usec << std::endl;
+                        std::cout << "  Xacc: " << message.data.sensor.xacc << std::endl;
+                        // ... (HIL_SENSORの他のメンバ変数を出力)
+
+                        break;
+                    case MAVLINK_MSG_TYPE_SYSTEM_TIME:
+                        std::cout << "  Type: SYSTEM_TIME" << std::endl;
+                        std::cout << "  Unix time: " << message.data.system_time.time_unix_usec << std::endl;
+                        std::cout << "  Boot time: " << message.data.system_time.time_boot_ms << std::endl;
+                        break;
+
+                    case MAVLINK_MSG_TYPE_HIL_GPS:
+                        std::cout << "  Type: HIL_GPS" << std::endl;
+                        std::cout << "  Time stamp: " << message.data.hil_gps.time_usec << std::endl;
+                        std::cout << "  Latitude: " << message.data.hil_gps.lat << std::endl;
+                        std::cout << "  Longitude: " << message.data.hil_gps.lon << std::endl;
+                        // ... (HIL_GPSの他のメンバ変数を出力)
+
+                        break;
                     default:
                         std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
                         break;
@@ -264,6 +306,7 @@ int main(int argc, char* argv[])
         std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
+    send_command_long(*comm_io);
     //send_heartbeat(*comm_io);
 
     pthread_t thread;
