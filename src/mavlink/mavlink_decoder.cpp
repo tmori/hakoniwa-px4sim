@@ -55,6 +55,12 @@ bool mavlink_get_message(mavlink_message_t *msg, MavlinkDecodedMessage *message)
             mavlink_msg_hil_gps_decode(msg, &message->data.hil_gps);
             return true;
         }        
+        case MAVLINK_MSG_ID_HIL_STATE_QUATERNION:
+        {
+            message->type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
+            mavlink_msg_hil_state_quaternion_decode(msg, &message->data.hil_state_quaternion);
+            return true;
+        }        
         default:
             message->type = MAVLINK_MSG_TYPE_UNKNOWN;
             return false;
