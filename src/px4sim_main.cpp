@@ -104,7 +104,7 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
 static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 0.01); // 平均: 0, 標準偏差: 0.01
+    static std::normal_distribution<float> distribution(0.0, 0.001); // 平均: 0, 標準偏差: 0.01
 
     // HIL_GPSメッセージの準備
     MavlinkDecodedMessage message;
@@ -307,13 +307,13 @@ int main(int argc, char* argv[])
 #else
     hako::px4::comm::TcpClient client;
     auto comm_io = client.client_open(nullptr, &serverEndpoint);
+    send_command_long(*comm_io);
 #endif
     if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
-    //send_command_long(*comm_io);
 
     pthread_t thread;
     if (pthread_create(&thread, NULL, receiver_thread, comm_io) != 0) {
