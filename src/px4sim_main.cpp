@@ -76,7 +76,7 @@ static void send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t
 static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 5); // 平均: 0, 標準偏差: 0.01
+    static std::normal_distribution<float> distribution(0.0, 0); // 平均: 0, 標準偏差: 0.01
     // HIL_STATE_QUATERNIONメッセージの準備
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
@@ -96,7 +96,7 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
     message.data.hil_state_quaternion.vy = 0;
     message.data.hil_state_quaternion.vz = 0;
     message.data.hil_state_quaternion.ind_airspeed = 0;
-    message.data.hil_state_quaternion.true_airspeed = 30 + distribution(generator);
+    message.data.hil_state_quaternion.true_airspeed = 1 + distribution(generator);
     message.data.hil_state_quaternion.xacc = 0;
     message.data.hil_state_quaternion.yacc = 0;
     message.data.hil_state_quaternion.zacc = 0;
@@ -106,7 +106,7 @@ static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector,
 static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 5); // 平均: 0, 標準偏差: 0.01
+    static std::normal_distribution<float> distribution(0.0, 0); // 平均: 0, 標準偏差: 0.01
 
     // HIL_GPSメッセージの準備
     MavlinkDecodedMessage message;
@@ -359,11 +359,13 @@ int main(int argc, char* argv[])
         if ((count % 1000) == 0) {
             send_heartbeat(*comm_io);
         }
-        if ((count % 4000) == 0) {
+        if ((count % 3991) == 0) {
             send_system_time(*comm_io, time_usec, count);
         }
-        if ((count % 1) == 0) {  // 頻度を1kHzに変更
+        if ((count % 4) == 0) {
             send_sensor(*comm_io, time_usec);
+        }
+        if ((count % 8) == 0) {
             send_hil_state_quaternion(*comm_io, time_usec);
         }
         if ((count % 52) == 0) { 
