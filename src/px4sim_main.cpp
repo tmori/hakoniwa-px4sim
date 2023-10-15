@@ -22,7 +22,7 @@ static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
         {
             if (clientConnector.send(packet, packetLen, &sentDataLen)) 
             {
-                //std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
+                std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
             } 
             else 
             {
@@ -412,8 +412,8 @@ static void *replay_dump_thread(void *arg)
                 exit(1);
             }
         } else {
-            std::cerr << "Failed to load data" << std::endl;
-            break;
+            std::cout << "END REPLAYING " << std::endl;
+            exit(1);
         }
     }
     std::cout << "END REPLAYING " << std::endl;
@@ -502,22 +502,32 @@ int main(int argc, char* argv[])
     else if (strcmp("replay", arg_mode) == 0) {
         hako::px4::comm::TcpServer server;
         comm_io = server.server_open(&serverEndpoint);
+        if (comm_io == nullptr) 
+        {
+            std::cerr << "Failed to open TCP client" << std::endl;
+            return -1;
+        }
         mode = REPLAY;
     }
     else if (strcmp("capture", arg_mode) == 0) {
         hako::px4::comm::TcpClient client;
         comm_io = client.client_open(nullptr, &serverEndpoint);
+        if (comm_io == nullptr) 
+        {
+            std::cerr << "Failed to open TCP client" << std::endl;
+            return -1;
+        }
         mode = CAPTURE;
     }
     else {
         hako::px4::comm::TcpClient client;
         comm_io = client.client_open(nullptr, &serverEndpoint);
+        if (comm_io == nullptr) 
+        {
+            std::cerr << "Failed to open TCP client" << std::endl;
+            return -1;
+        }
         mode = NORMAL;
-    }
-    if (comm_io == nullptr) 
-    {
-        std::cerr << "Failed to open TCP client" << std::endl;
-        return -1;
     }
 
     if (mode == REPLAY) {
@@ -532,6 +542,8 @@ int main(int argc, char* argv[])
         replay_dump_thread(nullptr);
     }
     else if (mode == CAPTURE) {
+        send_command_long(*comm_io);
+        send_heartbeat(*comm_io);
         capture_thread(comm_io);
     }
     else if (mode == NORMAL) {

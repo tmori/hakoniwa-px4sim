@@ -2,6 +2,7 @@
 #define _MAVLIN_MSG_TYPES_HPP_
 
 #include "mavlink.h"
+#include "mavlink_config.hpp"
 
 typedef enum {
     MAVLINK_MSG_TYPE_UNKNOWN,

@@ -5,6 +5,8 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <errno.h>
 
 bool mavlink_capture_create_controller(MavlinkCaptureControllerType &controller, const char* filepath) {
     controller.start_time = 0;
@@ -25,7 +27,7 @@ bool mavlink_capture_create_controller(MavlinkCaptureControllerType &controller,
     }
 
     // Open the file for writing
-    controller.save_file = open(filepath, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+    controller.save_file = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     if (controller.save_file == -1) {
         std::cerr << "Failed to open capture file for writing." << std::endl;
         free(controller.data);
@@ -59,26 +61,30 @@ bool mavlink_capture_append_data(MavlinkCaptureControllerType &controller, uint3
     }
 
     // Copy dataLength and data to cache
-    memcpy(controller.data + controller.offset, &packet.dataLength, sizeof(packet.dataLength));
+    //std::cout << "off: " << controller.offset << " datalen=" << packet.dataLength << std::endl;
+    memcpy(&controller.data[controller.offset], &packet.dataLength, sizeof(packet.dataLength));
     controller.offset += sizeof(packet.dataLength);
     controller.total_size += sizeof(packet.dataLength);
-    memcpy(controller.data + controller.offset, &packet.relativeTimestamp, sizeof(packet.relativeTimestamp));
+    //std::cout << "off: " << controller.offset << " relativeTimestamp=" << packet.relativeTimestamp << std::endl;
+    memcpy(&controller.data[controller.offset], &packet.relativeTimestamp, sizeof(packet.relativeTimestamp));
     controller.offset += sizeof(packet.relativeTimestamp);
     controller.total_size += sizeof(packet.relativeTimestamp);
-    memcpy(controller.data + controller.offset, data, dataLength);
+    //std::cout << "off: " << controller.offset << " data" << std::endl;
+    memcpy(&controller.data[controller.offset], data, dataLength);
     controller.offset += dataLength;
     controller.total_size += dataLength;
 
     controller.packet_num++;
 
     controller.packets_since_last_save++;
-    if (controller.packets_since_last_save >= 100) {
+    if (controller.packets_since_last_save >= MAVLINK_SAVE_PACKET_NUM) {
         mavlink_capture_save(controller);
         controller.packets_since_last_save = 0;
     }
     return true;
 }
 
+#define HEADER_SIZE  (sizeof(controller.start_time) + sizeof(controller.packet_num) + sizeof(controller.total_size))
 bool mavlink_capture_save(MavlinkCaptureControllerType &controller) {
     if (controller.save_file == -1 || controller.data == nullptr) {
         std::cerr << "Invalid file descriptor or data." << std::endl;
@@ -86,17 +92,39 @@ bool mavlink_capture_save(MavlinkCaptureControllerType &controller) {
     }
 
     // Update the metadata at the start of the file
-    lseek(controller.save_file, 0, SEEK_SET);
-    write(controller.save_file, &controller.start_time, sizeof(controller.start_time));
-    write(controller.save_file, &controller.packet_num, sizeof(controller.packet_num));
-    write(controller.save_file, &controller.total_size, sizeof(controller.total_size));
+    ssize_t ret = pwrite(controller.save_file, &controller.start_time, sizeof(controller.start_time), 0);
+    if (ret != sizeof(controller.start_time)) {
+        std::cerr << "failed to write data start_time: ret = " << ret << std::endl;
+        return false;
+    }
+    ret = pwrite(controller.save_file, &controller.packet_num, sizeof(controller.packet_num), 8);
+    if (ret != sizeof(controller.packet_num)) {
+        std::cerr << "failed to write data packet_num: ret = " << ret << std::endl;
+        return false;
+    }
+    ret = pwrite(controller.save_file, &controller.total_size, sizeof(controller.total_size), 16);
+    if (ret != sizeof(controller.total_size)) {
+        std::cerr << "failed to write data total_size: ret = " << ret << std::endl;
+        return false;
+    }
 
-
-    // Move to the last save offset and append the new data
-    lseek(controller.save_file, controller.last_save_offset, SEEK_SET);
-    int ret = write(controller.save_file, controller.data + (controller.total_size - controller.offset), controller.offset);
-    if (ret != (int)controller.offset) {
-        std::cerr << "Can not write file." << std::endl;
+    //std::cout << "packet_num: " << controller.packet_num << std::endl;
+    //std::cout << "offset: " << controller.offset << std::endl;
+    //std::cout << "total_size: " << controller.total_size << std::endl;
+    //std::cout << "last_save_offset: " << controller.last_save_offset << std::endl;
+    off_t loff = controller.last_save_offset - HEADER_SIZE;
+    off_t woff = controller.last_save_offset;
+    size_t wsize = controller.offset - loff;
+    //std::cout << "loff: " << loff << std::endl;
+    //std::cout << "woff: " << woff << std::endl;
+    //std::cout << "wsize: " << wsize << std::endl;
+    ret = pwrite(controller.save_file, 
+        &controller.data[loff], wsize, woff);
+    if (ret != wsize) {
+        std::cerr << "Can not write file. errno= " << errno << std::endl;
+        std::cerr << "woff= " << woff << std::endl;
+        std::cerr << "data_size= " << wsize << std::endl;
+        exit(1);
         return false;
     }
 

@@ -13,6 +13,9 @@ bool mavlink_capture_load_controller(MavlinkCaptureControllerType &controller, c
         std::cerr << "Failed to open capture file for reading." << std::endl;
         return false;
     }
+    lseek(controller.save_file, 0, SEEK_SET);
+    controller.offset = 0;
+    std::cout << "Open success: " << filepath << std::endl;
 
     // Read the metadata at the start of the file
     int read_result = read(controller.save_file, &controller.start_time, sizeof(controller.start_time));
@@ -20,6 +23,7 @@ bool mavlink_capture_load_controller(MavlinkCaptureControllerType &controller, c
         std::cerr << "Error reading start time." << std::endl;
         return false;
     }
+    std::cout << "start_time: " << controller.start_time << std::endl;
     controller.start_time = 0;
     read_result = read(controller.save_file, &controller.packet_num, sizeof(controller.packet_num));
     if (read_result != sizeof(controller.packet_num)) {
@@ -32,9 +36,11 @@ bool mavlink_capture_load_controller(MavlinkCaptureControllerType &controller, c
         std::cerr << "Error reading total size." << std::endl;
         return false;
     }
+    std::cout << "total_size: " << controller.total_size << std::endl;
 
     // Set the initial offset after metadata
     controller.last_save_offset = sizeof(controller.start_time) + sizeof(controller.packet_num) + sizeof(controller.total_size);
+    std::cout << "last_save_offset: " << controller.last_save_offset << std::endl;
 
     // Allocate memory for data cache
     controller.data = (uint8_t*) malloc(controller.total_size);
@@ -44,14 +50,16 @@ bool mavlink_capture_load_controller(MavlinkCaptureControllerType &controller, c
     }
 
     // Read the data from the file
-    lseek(controller.save_file, controller.last_save_offset, SEEK_SET);
-    int data_read = read(controller.save_file, controller.data, controller.total_size - controller.last_save_offset);
+    int data_read = pread(controller.save_file, 
+                        controller.data, 
+                        controller.total_size,
+                        controller.last_save_offset);
+    std::cout << "data_read: " << data_read << std::endl;
 
-    if (data_read != (int)(controller.total_size - controller.last_save_offset)) {
+    if (data_read != (int)(controller.total_size)) {
         std::cerr << "Error reading data." << std::endl;
         return false;
     }
-
     return true;
 }
 bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_t dataLength, uint8_t *data, uint32_t *r_dataLength, uint64_t *timestamp) {
@@ -61,7 +69,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
     }
 
     if (controller.offset >= controller.total_size) {
-        // No more data to read
+        std::cerr << "No more data to read." << std::endl;
         *r_dataLength = 0;
         return true;
     }
@@ -73,11 +81,14 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
         return false;
     }    
     memcpy(&packet_data_length, controller.data + controller.offset, sizeof(uint32_t));
+    std::cout << "data_length: controller.offset = " << controller.offset << std::endl;
     controller.offset += sizeof(uint32_t);
 
     // Check if there's enough space in the provided data buffer
     if (dataLength < packet_data_length) {
         std::cerr << "Data buffer too small." << std::endl;
+        std::cerr << "dataLength = " << dataLength << std::endl;
+        std::cerr << "packet_data_length = " << packet_data_length << std::endl;
         return false;
     }
 
@@ -88,6 +99,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
         return false;
     }    
     memcpy(&packet_timestamp, controller.data + controller.offset, sizeof(uint64_t));
+    std::cout << "timestamp: controller.offset = " << controller.offset << std::endl;
     controller.offset += sizeof(uint64_t);
     *timestamp = packet_timestamp;
 
@@ -99,6 +111,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
 
     // Read the packet data
     memcpy(data, controller.data + controller.offset, packet_data_length);
+    std::cout << "data: controller.offset = " << controller.offset << std::endl;
     controller.offset += packet_data_length;
 
     // Update the returned data length and relative timestamp
