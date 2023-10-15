@@ -17,6 +17,7 @@ add_executable(
     mavlink/mavlink_decoder.cpp
     mavlink/mavlink_encoder.cpp
     mavlink/mavlink_capture.cpp
+    mavlink/mavlink_capture_replay.cpp
     px4sim_main.cpp
 )
 
