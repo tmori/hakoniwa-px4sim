@@ -81,7 +81,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
         return false;
     }    
     memcpy(&packet_data_length, controller.data + controller.offset, sizeof(uint32_t));
-    std::cout << "data_length: controller.offset = " << controller.offset << std::endl;
+    //std::cout << "data_length: controller.offset = " << controller.offset << std::endl;
     controller.offset += sizeof(uint32_t);
 
     // Check if there's enough space in the provided data buffer
@@ -99,7 +99,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
         return false;
     }    
     memcpy(&packet_timestamp, controller.data + controller.offset, sizeof(uint64_t));
-    std::cout << "timestamp: controller.offset = " << controller.offset << std::endl;
+    //std::cout << "timestamp: controller.offset = " << controller.offset << std::endl;
     controller.offset += sizeof(uint64_t);
     *timestamp = packet_timestamp;
 
@@ -111,7 +111,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
 
     // Read the packet data
     memcpy(data, controller.data + controller.offset, packet_data_length);
-    std::cout << "data: controller.offset = " << controller.offset << std::endl;
+    //std::cout << "data: controller.offset = " << controller.offset << std::endl;
     controller.offset += packet_data_length;
 
     // Update the returned data length and relative timestamp

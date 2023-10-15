@@ -22,7 +22,7 @@ static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
         {
             if (clientConnector.send(packet, packetLen, &sentDataLen)) 
             {
-                std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
+                //std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
             } 
             else 
             {
@@ -281,6 +281,11 @@ static void *receiver_thread(void *arg)
         int recvDataLen;
         if (clientConnector->recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
         {
+#if 1
+            if (px4_data_hb_received && px4_data_hb_received) {
+                continue;
+            }
+#endif            
             std::cout << "Received data with length: " << recvDataLen << std::endl;
             mavlink_message_t msg;
             bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
@@ -353,7 +358,7 @@ static void *replay_thread(void *arg)
                 send_message(*clientConnector, message);
             }
             else {
-                std::cerr << "Failed to decode data" << std::endl;
+                std::cerr << "REPLAY THREAD: Failed to decode data" << std::endl;
                 exit(1);
             }
         } else {
@@ -408,7 +413,7 @@ static void *replay_dump_thread(void *arg)
                 mavlink_message_dump(msg, message);
             }
             else {
-                std::cerr << "Failed to decode data" << std::endl;
+                std::cerr << "RECV THREAD: Failed to decode data" << std::endl;
                 exit(1);
             }
         } else {
