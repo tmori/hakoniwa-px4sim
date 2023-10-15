@@ -54,8 +54,8 @@ bool mavlink_capture_load_controller(MavlinkCaptureControllerType &controller, c
 
     return true;
 }
-bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_t dataLength, uint8_t *data, uint32_t *r_dataLength) {
-    if (controller.data == nullptr || data == nullptr || r_dataLength == nullptr) {
+bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_t dataLength, uint8_t *data, uint32_t *r_dataLength, uint64_t *timestamp) {
+    if (controller.data == nullptr || data == nullptr || r_dataLength == nullptr || timestamp == nullptr) {
         std::cerr << "Invalid data or pointers." << std::endl;
         return false;
     }
@@ -89,6 +89,7 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
     }    
     memcpy(&packet_timestamp, controller.data + controller.offset, sizeof(uint64_t));
     controller.offset += sizeof(uint64_t);
+    *timestamp = packet_timestamp;
 
     // Check if there's enough data left in the cache
     if (controller.offset + packet_data_length > controller.total_size) {
@@ -103,5 +104,32 @@ bool mavlink_capture_load_data(MavlinkCaptureControllerType &controller, uint32_
     // Update the returned data length and relative timestamp
     *r_dataLength = packet_data_length;
 
+    return true;
+}
+
+bool mavlink_set_timestamp_for_replay_data(MavlinkDecodedMessage &message, uint64_t time_usec)
+{
+    switch (message.type) {
+        case MAVLINK_MSG_TYPE_HEARTBEAT:
+            //nothing to do
+            break;
+        case MAVLINK_MSG_TYPE_HIL_SENSOR:
+            message.data.sensor.time_usec = time_usec;
+            break;
+        case MAVLINK_MSG_TYPE_SYSTEM_TIME:
+            message.data.system_time.time_unix_usec = time_usec;
+            break;
+        case MAVLINK_MSG_TYPE_HIL_GPS:
+            message.data.hil_gps.time_usec = time_usec;
+            break;
+        case MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION:
+            message.data.hil_state_quaternion.time_usec = time_usec;
+            break;
+        case MAVLINK_MSG_TYPE_LONG:
+        case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
+        default:
+            std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
+            break;
+    }
     return true;
 }

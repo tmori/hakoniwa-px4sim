@@ -2,6 +2,7 @@
 #include "mavlink/mavlink_decoder.hpp"
 #include "mavlink/mavlink_encoder.hpp"
 #include "mavlink/mavlink_capture.hpp"
+#include "mavlink/mavlink_capture_replay.hpp"
 #include <iostream>
 #include <cstdlib> // for std::atoi
 #include <pthread.h>
@@ -187,12 +188,6 @@ static bool px4_data_hb_received = false;
 static bool px4_data_long_received = false;
 static void *receiver_thread(void *arg)
 {
-    MavlinkCaptureControllerType controller;
-    bool ret = mavlink_capture_create_controller(controller, MAVLINK_CAPTURE_SAVE_FILEPATH);
-    if (ret == false) {
-        std::cout << "ERROR: can not create capture data " << std::endl;
-        exit(1);
-    }
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
     while (true) {
         char recvBuffer[1024];
@@ -200,7 +195,6 @@ static void *receiver_thread(void *arg)
         if (clientConnector->recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
         {
             std::cout << "Received data with length: " << recvDataLen << std::endl;
-            ret = mavlink_capture_append_data(controller, recvDataLen, (const uint8_t*) recvBuffer);
             mavlink_message_t msg;
             bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
             if (ret)
@@ -301,6 +295,99 @@ static void *receiver_thread(void *arg)
     return NULL;
 }
 
+static void *replay_thread(void *arg)
+{
+    hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
+    MavlinkCaptureControllerType controller;
+    bool ret = mavlink_capture_load_controller(controller, MAVLINK_CAPTURE_SAVE_FILEPATH);
+    if (ret == false) {
+        std::cout << "ERROR: can not create replay thread " << std::endl;
+        exit(1);
+    }
+    //wait replay trigger
+    std::cout << "WAIT REPLAY TRIGGER" << std::endl;
+    while (true) {
+        if (px4_data_hb_received == false) {
+            usleep(1000);
+            continue;
+        }
+        if (px4_data_long_received == false) {
+            usleep(1000);
+            continue;
+        }
+        break;
+    }
+    uint64_t prev_timestamp = 0;
+    std::cout << "START REPLAYING " << std::endl;
+    auto now = std::chrono::system_clock::now();
+    auto duration_since_epoch = now.time_since_epoch();
+    uint64_t start_time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+    while (true) {
+        uint8_t recvBuffer[1024];
+        uint32_t recvDataLen;
+        uint64_t timestamp;
+
+        ret = mavlink_capture_load_data(controller, 1024, &recvBuffer[0], &recvDataLen, &timestamp);
+        if (ret && recvDataLen > 0) 
+        {
+            //sleep for send timing
+            if (prev_timestamp != 0) {
+                usleep(timestamp - prev_timestamp);
+            }
+            prev_timestamp = timestamp;
+            //decode and send
+            mavlink_message_t msg;
+            ret = mavlink_decode((const char*)recvBuffer, recvDataLen, &msg);
+            if (ret) {
+                MavlinkDecodedMessage message;
+                ret = mavlink_get_message(&msg, &message);
+                if (ret == false) {
+                    std::cerr << "Failed to get message data" << std::endl;
+                    exit(1);
+                }
+                mavlink_set_timestamp_for_replay_data(message, start_time_usec + timestamp);
+                send_message(*clientConnector, message);
+            }
+            else {
+                std::cerr << "Failed to decode data" << std::endl;
+                exit(1);
+            }
+        } else {
+            std::cerr << "Failed to load data" << std::endl;
+            break;
+        }
+    }
+    std::cout << "END REPLAYING " << std::endl;
+    return NULL;
+}
+
+static void *capture_thread(void *arg)
+{
+    MavlinkCaptureControllerType controller;
+    bool ret = mavlink_capture_create_controller(controller, MAVLINK_CAPTURE_SAVE_FILEPATH);
+    if (ret == false) {
+        std::cout << "ERROR: can not create capture thread " << std::endl;
+        exit(1);
+    }
+    std::cout << "START CAPTURING " << std::endl;
+    hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
+    while (true) {
+        char recvBuffer[1024];
+        int recvDataLen;
+        if (clientConnector->recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
+        {
+            std::cout << "Capture data with length: " << recvDataLen << std::endl;
+            ret = mavlink_capture_append_data(controller, recvDataLen, (const uint8_t*) recvBuffer);
+            if (ret == false) {
+                std::cerr << "Failed to capture data" << std::endl;
+            }
+        } else {
+            std::cerr << "Failed to receive data" << std::endl;
+        }
+    }
+    return NULL;
+}
+
 int main(int argc, char* argv[]) 
 {
     if(argc != 4) {
@@ -331,25 +418,31 @@ int main(int argc, char* argv[])
     }
     //send_command_long(*comm_io);
 
-    pthread_t thread;
-    if (pthread_create(&thread, NULL, receiver_thread, comm_io) != 0) {
-        std::cerr << "Failed to create heartbeat sender thread!" << std::endl;
-        return -1;
+    if (replay_mode) {
+        pthread_t thread_1;
+        pthread_t thread_2;
+        if (pthread_create(&thread_1, NULL, receiver_thread, comm_io) != 0) {
+            std::cerr << "Failed to create receiver thread!" << std::endl;
+            return -1;
+        }
+        if (pthread_create(&thread_2, NULL, replay_thread, comm_io) != 0) {
+            std::cerr << "Failed to create replay thread!" << std::endl;
+            return -1;
+        }
     }
-
+    else {
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, capture_thread, comm_io) != 0) {
+            std::cerr << "Failed to create capture thread!" << std::endl;
+            return -1;
+        }
+    }
     //int count = 0;
     while (true) {
         //auto now = std::chrono::system_clock::now();
         //auto duration_since_epoch = now.time_since_epoch();
         //uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
 
-        if (replay_mode == false) {
-            //capture mode
-            //nothing to do.
-        }
-        else {
-            //replay mode
-        }
     #if 0
         if ((count % 1000) == 0) {
             send_heartbeat(*comm_io);
