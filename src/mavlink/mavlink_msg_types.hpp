@@ -62,6 +62,8 @@ typedef struct {
     uint64_t memsize;
     uint64_t offset;
     uint8_t *data;
+    uint64_t packets_since_last_save;
+    uint64_t last_save_offset;
 } MavlinkCaptureControllerType;
 
 #define MAVLINK_CAPTURE_INC_DATA_SIZE   8192 /* メモリ拡張サイズ（単位：バイト） */

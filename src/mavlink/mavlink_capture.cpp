@@ -10,8 +10,12 @@ bool mavlink_capture_create_controller(MavlinkCaptureControllerType &controller,
     controller.start_time = 0;
     controller.packet_num = 0;
     controller.total_size = 0;
+    controller.packets_since_last_save = 0;
     controller.memsize = MAVLINK_CAPTURE_INC_DATA_SIZE;
     controller.offset = 0;
+
+    // Set the initial offset after metadata
+    controller.last_save_offset = sizeof(controller.start_time) + sizeof(controller.packet_num) + sizeof(controller.total_size);
 
     // Allocate initial memory for data cache
     controller.data = (uint8_t*) malloc(controller.memsize);
@@ -66,6 +70,12 @@ bool mavlink_capture_append_data(MavlinkCaptureControllerType &controller, uint3
     controller.total_size += dataLength;
 
     controller.packet_num++;
+
+    controller.packets_since_last_save++;
+    if (controller.packets_since_last_save >= 100) {
+        mavlink_capture_save(controller);
+        controller.packets_since_last_save = 0;
+    }
     return true;
 }
 
@@ -75,23 +85,23 @@ bool mavlink_capture_save(MavlinkCaptureControllerType &controller) {
         return false;
     }
 
-    // Write start_time, packet_num, and total_size to the start of the file
+    // Update the metadata at the start of the file
     lseek(controller.save_file, 0, SEEK_SET);
     write(controller.save_file, &controller.start_time, sizeof(controller.start_time));
     write(controller.save_file, &controller.packet_num, sizeof(controller.packet_num));
     write(controller.save_file, &controller.total_size, sizeof(controller.total_size));
 
-    // Write cached data to the file
-    ssize_t ret = write(controller.save_file, controller.data, controller.total_size);
-    if (ret != (ssize_t)controller.total_size) {
+
+    // Move to the last save offset and append the new data
+    lseek(controller.save_file, controller.last_save_offset, SEEK_SET);
+    int ret = write(controller.save_file, controller.data + (controller.total_size - controller.offset), controller.offset);
+    if (ret != (int)controller.offset) {
         std::cerr << "Can not write file." << std::endl;
         return false;
     }
 
-    // Close the file and free memory
-    close(controller.save_file);
-    free(controller.data);
-    controller.data = nullptr;
-
+    // Update the last save offset
+    controller.last_save_offset += ret;
+    fsync(controller.save_file);
     return true;
 }

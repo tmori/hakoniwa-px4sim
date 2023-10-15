@@ -16,6 +16,7 @@ add_executable(
     comm/tcp_connector.cpp
     mavlink/mavlink_decoder.cpp
     mavlink/mavlink_encoder.cpp
+    mavlink/mavlink_capture.cpp
     px4sim_main.cpp
 )
 

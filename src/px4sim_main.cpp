@@ -1,6 +1,7 @@
 #include "comm/tcp_connector.hpp"
 #include "mavlink/mavlink_decoder.hpp"
 #include "mavlink/mavlink_encoder.hpp"
+#include "mavlink/mavlink_capture.hpp"
 #include <iostream>
 #include <cstdlib> // for std::atoi
 #include <pthread.h>
@@ -186,6 +187,12 @@ static bool px4_data_hb_received = false;
 static bool px4_data_long_received = false;
 static void *receiver_thread(void *arg)
 {
+    MavlinkCaptureControllerType controller;
+    bool ret = mavlink_capture_create_controller(controller, MAVLINK_CAPTURE_SAVE_FILEPATH);
+    if (ret == false) {
+        std::cout << "ERROR: can not create capture data " << std::endl;
+        exit(1);
+    }
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
     while (true) {
         char recvBuffer[1024];
@@ -193,6 +200,7 @@ static void *receiver_thread(void *arg)
         if (clientConnector->recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
         {
             std::cout << "Received data with length: " << recvDataLen << std::endl;
+            ret = mavlink_capture_append_data(controller, recvDataLen, (const uint8_t*) recvBuffer);
             mavlink_message_t msg;
             bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
             if (ret)
@@ -295,7 +303,7 @@ static void *receiver_thread(void *arg)
 
 int main(int argc, char* argv[]) 
 {
-    if(argc != 3) {
+    if(argc != 4) {
         std::cerr << "Usage: " << argv[0] << "<server_ip> <server_port> <mode={replay|capture}> "  << std::endl;
         return -1;
     }
