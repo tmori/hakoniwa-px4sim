@@ -31,7 +31,7 @@ static void send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
         }
     }
 }
-#if 0
+
 static void send_command_long(hako::px4::comm::ICommIO &clientConnector)
 {
     MavlinkDecodedMessage message;
@@ -161,7 +161,6 @@ static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time
 
     send_message(clientConnector, message);
 }
-#endif
 #if 0
 static void send_ack(hako::px4::comm::ICommIO &clientConnector, 
                      uint16_t command, 
@@ -183,9 +182,97 @@ static void send_ack(hako::px4::comm::ICommIO &clientConnector,
 
 }
 #endif
-
 static bool px4_data_hb_received = false;
 static bool px4_data_long_received = false;
+
+static void mavlink_message_dump(mavlink_message_t &msg, MavlinkDecodedMessage &message)
+{
+    std::cout << "Decoded MAVLink message:" << std::endl;
+    std::cout << "  Message ID: " << msg.msgid << std::endl;
+    std::cout << "  System ID: " << static_cast<int>(msg.sysid) << std::endl;
+    std::cout << "  Component ID: " << static_cast<int>(msg.compid) << std::endl;
+    std::cout << "  Sequence: " << static_cast<int>(msg.seq) << std::endl;
+
+    switch (message.type) {
+        case MAVLINK_MSG_TYPE_HEARTBEAT:
+            std::cout << "  Type: HEARTBEAT" << std::endl;
+            std::cout << "  Custom mode: " << message.data.heartbeat.custom_mode << std::endl;
+            std::cout << "  Base mode: " << static_cast<int>(message.data.heartbeat.base_mode) << std::endl;
+            std::cout << "  System status: " << static_cast<int>(message.data.heartbeat.system_status) << std::endl;
+            std::cout << "  MAVLink version: " << static_cast<int>(message.data.heartbeat.mavlink_version) << std::endl;
+            px4_data_hb_received = true;
+            break;
+        case MAVLINK_MSG_TYPE_LONG:
+            std::cout << "  Type: COMMAND_LONG" << std::endl;
+            std::cout << "  Target system: " << static_cast<int>(message.data.command_long.target_system) << std::endl;
+            std::cout << "  Target component: " << static_cast<int>(message.data.command_long.target_component) << std::endl;
+            std::cout << "  Command ID: " << message.data.command_long.command << std::endl;
+            std::cout << "  Confirmation: " << static_cast<int>(message.data.command_long.confirmation) << std::endl;
+            //send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
+            //    message.data.command_long.target_system, message.data.command_long.target_component);
+            px4_data_long_received = true;
+            break;
+        case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
+            std::cout << "  Type: HIL_ACTUATOR_CONTROLS" << std::endl;
+            std::cout << "  Time_usec: " << message.data.hil_actuator_controls.time_usec << std::endl;
+            std::cout << "  Mode: " << static_cast<int>(message.data.hil_actuator_controls.mode) << std::endl;
+            std::cout << "  Flags: " << message.data.hil_actuator_controls.flags << std::endl;
+            std::cout << "  Controls: ";
+            for(int i = 0; i < 8; ++i) {  // Assuming there are 8 controls
+                std::cout << message.data.hil_actuator_controls.controls[i] << " ";
+            }
+            std::cout << std::endl;
+            break;
+        case MAVLINK_MSG_TYPE_HIL_SENSOR:
+            std::cout << "  Type: HIL_SENSOR" << std::endl;
+            std::cout << "  Time stamp: " << message.data.sensor.time_usec << std::endl;
+            std::cout << "  Xacc: " << message.data.sensor.xacc << std::endl;
+            std::cout << "  Yacc: " << message.data.sensor.yacc << std::endl;
+            std::cout << "  Zacc: " << message.data.sensor.zacc << std::endl;
+            std::cout << "  Xgyro: " << message.data.sensor.xgyro << std::endl;
+            std::cout << "  Ygyro: " << message.data.sensor.ygyro << std::endl;
+            std::cout << "  Zgyro: " << message.data.sensor.zgyro << std::endl;
+            std::cout << "  Xmag: " << message.data.sensor.xmag << std::endl;
+            std::cout << "  Ymag: " << message.data.sensor.ymag << std::endl;
+            std::cout << "  Zmag: " << message.data.sensor.zmag << std::endl;
+            std::cout << "  Abs_pressure: " << message.data.sensor.abs_pressure << std::endl;
+            std::cout << "  Diff_pressure: " << message.data.sensor.diff_pressure << std::endl;
+            std::cout << "  temparature: " << message.data.sensor.temperature << std::endl;
+            std::cout << "  fileds_updated: " << message.data.sensor.fields_updated << std::endl;
+            //std::cout << "  id: " << message.data.sensor.id << std::endl;
+            printf(" id: 0x%x\n", message.data.sensor.id);
+            break;
+        case MAVLINK_MSG_TYPE_SYSTEM_TIME:
+            std::cout << "  Type: SYSTEM_TIME" << std::endl;
+            std::cout << "  Unix time: " << message.data.system_time.time_unix_usec << std::endl;
+            std::cout << "  Boot time: " << message.data.system_time.time_boot_ms << std::endl;
+            break;
+
+        case MAVLINK_MSG_TYPE_HIL_GPS:
+            std::cout << "  Type: HIL_GPS" << std::endl;
+            std::cout << "  Time stamp: " << message.data.hil_gps.time_usec << std::endl;
+            std::cout << "  fix_type: " << message.data.hil_gps.fix_type << std::endl;
+            std::cout << "  Latitude: " << message.data.hil_gps.lat << std::endl;
+            std::cout << "  Longitude: " << message.data.hil_gps.lon << std::endl;
+            std::cout << "  alt: " << message.data.hil_gps.alt << std::endl;
+            std::cout << "  eph: " << message.data.hil_gps.eph << std::endl;
+            std::cout << "  epv: " << message.data.hil_gps.epv << std::endl;
+            std::cout << "  vn: " << message.data.hil_gps.vn << std::endl;
+            std::cout << "  vel: " << message.data.hil_gps.vel << std::endl;
+            std::cout << "  vd: " << message.data.hil_gps.vd << std::endl;
+            std::cout << "  cog: " << message.data.hil_gps.cog << std::endl;
+            std::cout << "  satelites_visible: " << message.data.hil_gps.satellites_visible << std::endl;
+            //std::cout << "  id: " << message.data.hil_gps.id << std.endl;
+            printf(" id: 0x%x\n", message.data.hil_gps.id);
+            std::cout << "  yaw: " << message.data.hil_gps.yaw << std::endl;
+            break;
+        default:
+            std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
+            break;
+    }
+}
+
+
 static void *receiver_thread(void *arg)
 {
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
@@ -199,93 +286,10 @@ static void *receiver_thread(void *arg)
             bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
             if (ret)
             {
-                std::cout << "Decoded MAVLink message:" << std::endl;
-                std::cout << "  Message ID: " << msg.msgid << std::endl;
-                std::cout << "  System ID: " << static_cast<int>(msg.sysid) << std::endl;
-                std::cout << "  Component ID: " << static_cast<int>(msg.compid) << std::endl;
-                std::cout << "  Sequence: " << static_cast<int>(msg.seq) << std::endl;
-
                 MavlinkDecodedMessage message;
                 ret = mavlink_get_message(&msg, &message);
                 if (ret) {
-                    switch (message.type) {
-                    case MAVLINK_MSG_TYPE_HEARTBEAT:
-                        std::cout << "  Type: HEARTBEAT" << std::endl;
-                        std::cout << "  Custom mode: " << message.data.heartbeat.custom_mode << std::endl;
-                        std::cout << "  Base mode: " << static_cast<int>(message.data.heartbeat.base_mode) << std::endl;
-                        std::cout << "  System status: " << static_cast<int>(message.data.heartbeat.system_status) << std::endl;
-                        std::cout << "  MAVLink version: " << static_cast<int>(message.data.heartbeat.mavlink_version) << std::endl;
-                        px4_data_hb_received = true;
-                        break;
-                    case MAVLINK_MSG_TYPE_LONG:
-                        std::cout << "  Type: COMMAND_LONG" << std::endl;
-                        std::cout << "  Target system: " << static_cast<int>(message.data.command_long.target_system) << std::endl;
-                        std::cout << "  Target component: " << static_cast<int>(message.data.command_long.target_component) << std::endl;
-                        std::cout << "  Command ID: " << message.data.command_long.command << std::endl;
-                        std::cout << "  Confirmation: " << static_cast<int>(message.data.command_long.confirmation) << std::endl;
-                        //send_ack(*clientConnector, message.data.command_long.command, MAV_RESULT_ACCEPTED, 
-                        //    message.data.command_long.target_system, message.data.command_long.target_component);
-                        px4_data_long_received = true;
-                        break;
-                    case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
-                        std::cout << "  Type: HIL_ACTUATOR_CONTROLS" << std::endl;
-                        std::cout << "  Time_usec: " << message.data.hil_actuator_controls.time_usec << std::endl;
-                        std::cout << "  Mode: " << static_cast<int>(message.data.hil_actuator_controls.mode) << std::endl;
-                        std::cout << "  Flags: " << message.data.hil_actuator_controls.flags << std::endl;
-                        std::cout << "  Controls: ";
-                        for(int i = 0; i < 8; ++i) {  // Assuming there are 8 controls
-                            std::cout << message.data.hil_actuator_controls.controls[i] << " ";
-                        }
-                        std::cout << std::endl;
-                        break;
-                    case MAVLINK_MSG_TYPE_HIL_SENSOR:
-                        std::cout << "  Type: HIL_SENSOR" << std::endl;
-                        std::cout << "  Time stamp: " << message.data.sensor.time_usec << std::endl;
-                        std::cout << "  Xacc: " << message.data.sensor.xacc << std::endl;
-                        std::cout << "  Yacc: " << message.data.sensor.yacc << std::endl;
-                        std::cout << "  Zacc: " << message.data.sensor.zacc << std::endl;
-                        std::cout << "  Xgyro: " << message.data.sensor.xgyro << std::endl;
-                        std::cout << "  Ygyro: " << message.data.sensor.ygyro << std::endl;
-                        std::cout << "  Zgyro: " << message.data.sensor.zgyro << std::endl;
-                        std::cout << "  Xmag: " << message.data.sensor.xmag << std::endl;
-                        std::cout << "  Ymag: " << message.data.sensor.ymag << std::endl;
-                        std::cout << "  Zmag: " << message.data.sensor.zmag << std::endl;
-                        std::cout << "  Abs_pressure: " << message.data.sensor.abs_pressure << std::endl;
-                        std::cout << "  Diff_pressure: " << message.data.sensor.diff_pressure << std::endl;
-                        std::cout << "  temparature: " << message.data.sensor.temperature << std::endl;
-                        std::cout << "  fileds_updated: " << message.data.sensor.fields_updated << std::endl;
-                        //std::cout << "  id: " << message.data.sensor.id << std::endl;
-                        printf(" id: 0x%x\n", message.data.sensor.id);
-                        break;
-                    case MAVLINK_MSG_TYPE_SYSTEM_TIME:
-                        std::cout << "  Type: SYSTEM_TIME" << std::endl;
-                        std::cout << "  Unix time: " << message.data.system_time.time_unix_usec << std::endl;
-                        std::cout << "  Boot time: " << message.data.system_time.time_boot_ms << std::endl;
-                        break;
-
-                    case MAVLINK_MSG_TYPE_HIL_GPS:
-                        std::cout << "  Type: HIL_GPS" << std::endl;
-                        std::cout << "  Time stamp: " << message.data.hil_gps.time_usec << std::endl;
-                        std::cout << "  fix_type: " << message.data.hil_gps.fix_type << std::endl;
-                        std::cout << "  Latitude: " << message.data.hil_gps.lat << std::endl;
-                        std::cout << "  Longitude: " << message.data.hil_gps.lon << std::endl;
-                        std::cout << "  alt: " << message.data.hil_gps.alt << std::endl;
-                        std::cout << "  eph: " << message.data.hil_gps.eph << std::endl;
-                        std::cout << "  epv: " << message.data.hil_gps.epv << std::endl;
-                        std::cout << "  vn: " << message.data.hil_gps.vn << std::endl;
-                        std::cout << "  vel: " << message.data.hil_gps.vel << std::endl;
-                        std::cout << "  vd: " << message.data.hil_gps.vd << std::endl;
-                        std::cout << "  cog: " << message.data.hil_gps.cog << std::endl;
-                        std::cout << "  satelites_visible: " << message.data.hil_gps.satellites_visible << std::endl;
-                        //std::cout << "  id: " << message.data.hil_gps.id << std::endl;
-                        printf(" id: 0x%x\n", message.data.hil_gps.id);
-                        std::cout << "  yaw: " << message.data.hil_gps.yaw << std::endl;
-
-                        break;
-                    default:
-                        std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;
-                        break;
-                    }
+                    mavlink_message_dump(msg, message);
                 }
             }
         } else {
@@ -361,6 +365,60 @@ static void *replay_thread(void *arg)
     return NULL;
 }
 
+static void *replay_dump_thread(void *arg)
+{
+    if (arg == nullptr) {
+        //OK
+    }
+    MavlinkCaptureControllerType controller;
+    bool ret = mavlink_capture_load_controller(controller, MAVLINK_CAPTURE_SAVE_FILEPATH);
+    if (ret == false) {
+        std::cout << "ERROR: can not create replay thread " << std::endl;
+        exit(1);
+    }
+    uint64_t prev_timestamp = 0;
+    std::cout << "START REPLAYING " << std::endl;
+    auto now = std::chrono::system_clock::now();
+    auto duration_since_epoch = now.time_since_epoch();
+    uint64_t start_time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+    while (true) {
+        uint8_t recvBuffer[1024];
+        uint32_t recvDataLen;
+        uint64_t timestamp;
+
+        ret = mavlink_capture_load_data(controller, 1024, &recvBuffer[0], &recvDataLen, &timestamp);
+        if (ret && recvDataLen > 0) 
+        {
+            //sleep for send timing
+            if (prev_timestamp != 0) {
+                usleep(timestamp - prev_timestamp);
+            }
+            prev_timestamp = timestamp;
+            //decode and send
+            mavlink_message_t msg;
+            ret = mavlink_decode((const char*)recvBuffer, recvDataLen, &msg);
+            if (ret) {
+                MavlinkDecodedMessage message;
+                ret = mavlink_get_message(&msg, &message);
+                if (ret == false) {
+                    std::cerr << "Failed to get message data" << std::endl;
+                    exit(1);
+                }
+                mavlink_set_timestamp_for_replay_data(message, start_time_usec + timestamp);
+                mavlink_message_dump(msg, message);
+            }
+            else {
+                std::cerr << "Failed to decode data" << std::endl;
+                exit(1);
+            }
+        } else {
+            std::cerr << "Failed to load data" << std::endl;
+            break;
+        }
+    }
+    std::cout << "END REPLAYING " << std::endl;
+    return NULL;
+}
 static void *capture_thread(void *arg)
 {
     MavlinkCaptureControllerType controller;
@@ -387,79 +445,103 @@ static void *capture_thread(void *arg)
     }
     return NULL;
 }
+typedef enum {
+    REPLAY = 0,
+    REPLAY_DUMP,
+    CAPTURE,
+    NORMAL
+} ModeType;
+static void* normal_thread(void *arg)
+{
+    hako::px4::comm::ICommIO *comm_io = static_cast<hako::px4::comm::ICommIO *>(arg);
+    int count = 0;
+    while (true) {
+        auto now = std::chrono::system_clock::now();
+        auto duration_since_epoch = now.time_since_epoch();
+        uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+
+        if ((count % 1000) == 0) {
+            send_heartbeat(*comm_io);
+        }
+        if ((count % 3991) == 0) {
+            send_system_time(*comm_io, time_usec, count);
+        }
+        if ((count % 4) == 0) { 
+            send_sensor(*comm_io, time_usec);
+        }
+        if ((count % 8) == 0) { 
+            send_hil_state_quaternion(*comm_io, time_usec);
+        }
+        if ((count % 52) == 0) { 
+            send_hil_gps(*comm_io, time_usec);
+        }
+        usleep(1 * 1000);  // 1msec
+        count++;
+    }
+    return NULL;
+}
 
 int main(int argc, char* argv[]) 
 {
     if(argc != 4) {
-        std::cerr << "Usage: " << argv[0] << "<server_ip> <server_port> <mode={replay|capture}> "  << std::endl;
+        std::cerr << "Usage: " << argv[0] << "<server_ip> <server_port> <mode={replay|replay_dump|capture|normal}> "  << std::endl;
         return -1;
     }
-    bool replay_mode = true;
+    ModeType mode = NORMAL;
     const char* serverIp = argv[1];
     int serverPort = std::atoi(argv[2]);
-    const char* mode = argv[3];
+    const char* arg_mode = argv[3];
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
     hako::px4::comm::ICommIO *comm_io  = nullptr;
-    if (strcmp("replay", mode) == 0) {
+    if (strcmp("replay_dump", arg_mode) == 0) {
+        comm_io = nullptr;
+        mode = REPLAY_DUMP;
+    }
+    else if (strcmp("replay", arg_mode) == 0) {
         hako::px4::comm::TcpServer server;
         comm_io = server.server_open(&serverEndpoint);
+        mode = REPLAY;
     }
-    else {
-        replay_mode = false;
+    else if (strcmp("capture", arg_mode) == 0) {
         hako::px4::comm::TcpClient client;
         comm_io = client.client_open(nullptr, &serverEndpoint);
+        mode = CAPTURE;
+    }
+    else {
+        hako::px4::comm::TcpClient client;
+        comm_io = client.client_open(nullptr, &serverEndpoint);
+        mode = NORMAL;
     }
     if (comm_io == nullptr) 
     {
         std::cerr << "Failed to open TCP client" << std::endl;
         return -1;
     }
-    //send_command_long(*comm_io);
 
-    if (replay_mode) {
+    if (mode == REPLAY) {
         pthread_t thread_1;
-        pthread_t thread_2;
         if (pthread_create(&thread_1, NULL, receiver_thread, comm_io) != 0) {
             std::cerr << "Failed to create receiver thread!" << std::endl;
             return -1;
         }
-        if (pthread_create(&thread_2, NULL, replay_thread, comm_io) != 0) {
-            std::cerr << "Failed to create replay thread!" << std::endl;
+        replay_thread(comm_io);
+    }
+    else if (mode == REPLAY_DUMP) {
+        replay_dump_thread(nullptr);
+    }
+    else if (mode == CAPTURE) {
+        capture_thread(comm_io);
+    }
+    else if (mode == NORMAL) {
+        pthread_t thread_1;
+        send_command_long(*comm_io);
+        if (pthread_create(&thread_1, NULL, receiver_thread, comm_io) != 0) {
+            std::cerr << "Failed to create receiver thread!" << std::endl;
             return -1;
         }
-    }
-    else {
-        pthread_t thread;
-        if (pthread_create(&thread, NULL, capture_thread, comm_io) != 0) {
-            std::cerr << "Failed to create capture thread!" << std::endl;
-            return -1;
-        }
-    }
-    //int count = 0;
-    while (true) {
-        //auto now = std::chrono::system_clock::now();
-        //auto duration_since_epoch = now.time_since_epoch();
-        //uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
-
-    #if 0
-        if ((count % 1000) == 0) {
-            send_heartbeat(*comm_io);
-        }
-        if ((count % 4000) == 0) {
-            send_system_time(*comm_io, time_usec, count);
-        }
-        if ((count % 1) == 0) {  // 頻度を1kHzに変更
-            send_sensor(*comm_io, time_usec);
-        }
-        if ((count % 52) == 0) { 
-            send_hil_gps(*comm_io, time_usec);
-            //send_hil_state_quaternion(*comm_io, time_usec);
-        }
-    #endif
-        usleep(1 * 1000);  // 1msec
-        //count++;
+        normal_thread(comm_io);
     }
 
     comm_io->close();
