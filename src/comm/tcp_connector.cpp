@@ -23,6 +23,9 @@ ICommIO* TcpClient::client_open(IcommEndpointType *src, IcommEndpointType *dst) 
         std::cout << "Failed to create socket: " << strerror(errno) << std::endl;
         return nullptr;
     }
+    if (src != nullptr) {
+        //nothing to do
+    }
 
     struct sockaddr_in remote_addr;
     memset(&remote_addr, 0, sizeof(remote_addr));

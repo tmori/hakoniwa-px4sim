@@ -120,7 +120,7 @@ bool mavlink_capture_save(MavlinkCaptureControllerType &controller) {
     //std::cout << "wsize: " << wsize << std::endl;
     ret = pwrite(controller.save_file, 
         &controller.data[loff], wsize, woff);
-    if (ret != wsize) {
+    if (ret != (ssize_t)wsize) {
         std::cerr << "Can not write file. errno= " << errno << std::endl;
         std::cerr << "woff= " << woff << std::endl;
         std::cerr << "data_size= " << wsize << std::endl;
