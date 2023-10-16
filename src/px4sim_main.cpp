@@ -281,14 +281,9 @@ static void *receiver_thread(void *arg)
         int recvDataLen;
         if (clientConnector->recv(recvBuffer, sizeof(recvBuffer), &recvDataLen)) 
         {
-#if 1
-            if (px4_data_hb_received && px4_data_hb_received) {
-                continue;
-            }
-#endif            
             std::cout << "Received data with length: " << recvDataLen << std::endl;
             mavlink_message_t msg;
-            bool ret = mavlink_decode(recvBuffer, recvDataLen, &msg);
+            bool ret = mavlink_decode(MAVLINK_CONFIG_CHAN_0, recvBuffer, recvDataLen, &msg);
             if (ret)
             {
                 MavlinkDecodedMessage message;
@@ -346,7 +341,7 @@ static void *replay_thread(void *arg)
             prev_timestamp = timestamp;
             //decode and send
             mavlink_message_t msg;
-            ret = mavlink_decode((const char*)recvBuffer, recvDataLen, &msg);
+            ret = mavlink_decode(MAVLINK_CONFIG_CHAN_1, (const char*)recvBuffer, recvDataLen, &msg);
             if (ret) {
                 MavlinkDecodedMessage message;
                 ret = mavlink_get_message(&msg, &message);
@@ -401,7 +396,7 @@ static void *replay_dump_thread(void *arg)
             prev_timestamp = timestamp;
             //decode and send
             mavlink_message_t msg;
-            ret = mavlink_decode((const char*)recvBuffer, recvDataLen, &msg);
+            ret = mavlink_decode(MAVLINK_CONFIG_CHAN_0, (const char*)recvBuffer, recvDataLen, &msg);
             if (ret) {
                 MavlinkDecodedMessage message;
                 ret = mavlink_get_message(&msg, &message);
