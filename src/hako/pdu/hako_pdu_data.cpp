@@ -111,11 +111,3 @@ void hako_write_hil_actuator_controls(const Hako_HakoHilActuatorControls &hil_ac
         hako_pdu_actuator_data.hil_actuator_controls, 
         hil_actuator_controls);
 }
-
-
-
-Hako_uint64 hako_get_current_time_usec()
-{
-    //TOOD
-    return 0;
-}

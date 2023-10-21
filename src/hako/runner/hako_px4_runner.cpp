@@ -1,12 +1,11 @@
 #include "hako_px4_runner.hpp"
 #include "hako_px4_runner_config.hpp"
-#include "hako_asset_runner.h"
 #include "../pdu/hako_pdu_data.hpp"
 #include <iostream>
 
 typedef struct {
     HakoPx4RunnerArgType *arg;
-    uint64_t asset_time;
+    hako_time_t asset_time;
 } HakoPx4ControlType;
 HakoPx4ControlType hako_px4_control;
 
@@ -80,3 +79,8 @@ void *hako_px4_runner(void *argp)
 
     return nullptr;
 }
+hako_time_t hako_get_current_time_usec()
+{
+    return hako_px4_control.asset_time;
+}
+

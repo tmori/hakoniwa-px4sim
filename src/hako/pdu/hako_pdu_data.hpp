@@ -90,7 +90,4 @@ static inline void hako_mavlink_write_hil_actuator_controls(mavlink_hil_actuator
     hako_write_hil_actuator_controls(dst);
 }
 
-extern Hako_uint64 hako_get_current_time_usec();
-
-
 #endif /* _HAKO_PDU_DATA_HPP_ */
