@@ -3,6 +3,7 @@
 #include "../mavlink/mavlink_encoder.hpp"
 #include "../comm/tcp_connector.hpp"
 #include "../hako/pdu/hako_pdu_data.hpp"
+#include "../hako/runner/hako_px4_runner.hpp"
 
 #include <iostream>
 #include <unistd.h>
@@ -11,30 +12,34 @@
 #include "../mavlink/mavlink_msg_types.hpp"
 
 static void px4sim_send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t time_unix_usec, uint32_t time_boot_ms);
+static void px4sim_send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec);
+static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec);
+static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec);
 
 void* px4sim_thread_sender(void *arg)
 {
     hako::px4::comm::ICommIO *comm_io = static_cast<hako::px4::comm::ICommIO *>(arg);
+    auto now = std::chrono::system_clock::now();
+    auto duration_since_epoch = now.time_since_epoch();
+    uint64_t start_time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
     int count = 0;
     while (true) {
-        auto now = std::chrono::system_clock::now();
-        auto duration_since_epoch = now.time_since_epoch();
-        uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
-
+        uint64_t boot_time_usec = (uint64_t)hako_get_current_time_usec();
+        uint64_t time_usec =  start_time_usec + boot_time_usec;
         if ((count % 1000) == 0) {
             px4sim_send_dummy_heartbeat(*comm_io);
         }
         if ((count % 3991) == 0) {
-            px4sim_send_system_time(*comm_io, time_usec, count);
+            px4sim_send_system_time(*comm_io, time_usec, boot_time_usec/1000);
         }
         if ((count % 4) == 0) { 
-            //send_sensor(*comm_io, time_usec);
+            px4sim_send_sensor(*comm_io, time_usec);
         }
         if ((count % 8) == 0) { 
-            //send_hil_state_quaternion(*comm_io, time_usec);
+            px4sim_send_hil_state_quaternion(*comm_io, time_usec);
         }
         if ((count % 52) == 0) { 
-            //send_hil_gps(*comm_io, time_usec);
+            px4sim_send_hil_gps(*comm_io, time_usec);
         }
         usleep(1 * 1000);  // 1msec
         count++;
@@ -109,6 +114,51 @@ static void px4sim_send_system_time(hako::px4::comm::ICommIO &clientConnector, u
 
     px4sim_send_message(clientConnector, message);
 }
+static void px4sim_send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    static bool is_initialized = false;
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_GPS;
+    message.data.hil_gps.time_usec = time_usec;
+
+    if (hako_mavlink_read_hil_gps(message.data.hil_gps)) {
+        is_initialized = true;
+    }
+    if (is_initialized) {
+        px4sim_send_message(clientConnector, message);
+    }
+}
+static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    static bool is_initialized = false;
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
+    message.data.hil_state_quaternion.time_usec = time_usec;
+
+    if (hako_mavlink_read_hil_state_quaternion(message.data.hil_state_quaternion)) {
+        is_initialized = true;
+    }
+    if (is_initialized) {
+        px4sim_send_message(clientConnector, message);
+    }
+}
+static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    static bool is_initialized = false;
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
+    message.data.sensor.time_usec = time_usec;
+
+    if (hako_mavlink_read_hil_sensor(message.data.sensor)) {
+        is_initialized = true;
+    }
+    if (is_initialized) {
+        message.data.sensor.fields_updated = 7167; 
+        message.data.sensor.id = 0;
+        px4sim_send_message(clientConnector, message);
+    }
+}
+
 #if 0
 static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
