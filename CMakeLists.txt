@@ -10,7 +10,7 @@ project(hakoniwa-px4sim
 enable_testing()
 
 set(MAVLINK_SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/c_library_v2")
-set(HAKONIWA_SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/hakoniwa-core-cpp-client/src")
+set(HAKONIWA_SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/hakoniwa-core-cpp-client/src/hakoc/src")
 set(HAKONIWA_PDU_SOURCE_DIR "${PROJECT_SOURCE_DIR}/third-party/hakoniwa-ros2pdu/pdu/types")
 
 if (DEFINED HAKO_CLIENT_OPTION_FILEPATH)

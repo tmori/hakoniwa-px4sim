@@ -20,6 +20,7 @@ add_executable(
     mavlink/mavlink_capture_replay.cpp
 
     hako/pdu/hako_pdu_data.cpp
+    hako/runner/hako_px4_runner.cpp
     px4sim_main.cpp
 )
 
@@ -32,3 +33,5 @@ target_include_directories(
     PRIVATE ${HAKONIWA_PDU_SOURCE_DIR}
     PRIVATE ${HAKONIWA_SOURCE_DIR}
 )
+
+target_link_libraries(hako-px4sim hakoarun)
