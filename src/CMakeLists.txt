@@ -14,6 +14,7 @@ add_executable(
     hako-px4sim
     comm/udp_connector.cpp
     comm/tcp_connector.cpp
+    mavlink/mavlink_dump.cpp
     mavlink/mavlink_decoder.cpp
     mavlink/mavlink_encoder.cpp
     mavlink/mavlink_capture.cpp
@@ -21,6 +22,9 @@ add_executable(
 
     hako/pdu/hako_pdu_data.cpp
     hako/runner/hako_px4_runner.cpp
+
+    threads/px4sim_thread_receiver.cpp
+    threads/px4sim_thread_sender.cpp
     px4sim_main.cpp
 )
 
