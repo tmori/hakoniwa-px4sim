@@ -4,6 +4,7 @@
 #include "threads/px4sim_thread_sender.hpp"
 #include "threads/px4sim_thread_replay.hpp"
 #include "threads/px4sim_thread_capture.hpp"
+#include "hako/runner/hako_px4_runner.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <pthread.h>
@@ -89,7 +90,16 @@ int main(int argc, char* argv[])
             std::cerr << "Failed to create receiver thread!" << std::endl;
             return -1;
         }
-        px4sim_thread_sender(comm_io);
+        if (pthread_create(&thread_1, NULL, px4sim_thread_sender, comm_io) != 0) {
+            std::cerr << "Failed to create sender thread!" << std::endl;
+            return -1;
+        }
+        HakoPx4RunnerArgType arg;
+        arg.asset_name = "px4sim";
+        arg.config_path = "./custom.json";
+        arg.delta_time_msec = 10;
+        arg.robo_name = "drone";
+        hako_px4_runner(&arg);
     }
 
     comm_io->close();

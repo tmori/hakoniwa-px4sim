@@ -4,9 +4,9 @@
 #include "hako_asset_runner.h"
 
 typedef struct {
-    char* asset_name;
-    char* robo_name;
-    char* config_path;
+    const char* asset_name;
+    const char* robo_name;
+    const char* config_path;
     int delta_time_msec;
 } HakoPx4RunnerArgType;
 
