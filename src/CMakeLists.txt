@@ -25,6 +25,8 @@ add_executable(
 
     threads/px4sim_thread_receiver.cpp
     threads/px4sim_thread_sender.cpp
+    threads/px4sim_thread_replay.cpp
+    threads/px4sim_thread_capture.cpp
     px4sim_main.cpp
 )
 

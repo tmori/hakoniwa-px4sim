@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include "../mavlink/mavlink_msg_types.hpp"
-#include <iostream>
 
 static void hako_mavlink_write_data(MavlinkDecodedMessage &message)
 {

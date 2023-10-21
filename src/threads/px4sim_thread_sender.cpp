@@ -1,0 +1,198 @@
+#include "px4sim_thread_sender.hpp"
+#include "mavlink.h"
+#include "../mavlink/mavlink_encoder.hpp"
+#include "../comm/tcp_connector.hpp"
+#include "../hako/pdu/hako_pdu_data.hpp"
+
+#include <iostream>
+#include <unistd.h>
+#include <random>
+
+#include "../mavlink/mavlink_msg_types.hpp"
+
+static void px4sim_send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t time_unix_usec, uint32_t time_boot_ms);
+
+void* px4sim_thread_sender(void *arg)
+{
+    hako::px4::comm::ICommIO *comm_io = static_cast<hako::px4::comm::ICommIO *>(arg);
+    int count = 0;
+    while (true) {
+        auto now = std::chrono::system_clock::now();
+        auto duration_since_epoch = now.time_since_epoch();
+        uint64_t time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+
+        if ((count % 1000) == 0) {
+            px4sim_send_dummy_heartbeat(*comm_io);
+        }
+        if ((count % 3991) == 0) {
+            px4sim_send_system_time(*comm_io, time_usec, count);
+        }
+        if ((count % 4) == 0) { 
+            //send_sensor(*comm_io, time_usec);
+        }
+        if ((count % 8) == 0) { 
+            //send_hil_state_quaternion(*comm_io, time_usec);
+        }
+        if ((count % 52) == 0) { 
+            //send_hil_gps(*comm_io, time_usec);
+        }
+        usleep(1 * 1000);  // 1msec
+        count++;
+    }
+    return NULL;
+}
+
+
+void px4sim_send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecodedMessage &message)
+{
+    mavlink_message_t mavlinkMsg;
+    if (mavlink_encode_message(&mavlinkMsg, &message)) 
+    {
+        int sentDataLen = 0;
+        char packet[MAVLINK_MAX_PACKET_LEN];
+        int packetLen = mavlink_get_packet(packet, sizeof(packet), &mavlinkMsg);
+        if (packetLen > 0) 
+        {
+            if (clientConnector.send(packet, packetLen, &sentDataLen)) 
+            {
+                //std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
+            } 
+            else 
+            {
+                std::cerr << "Failed to send MAVLink message" << std::endl;
+            }
+        }
+    }
+}
+
+void px4sim_send_dummy_command_long(hako::px4::comm::ICommIO &clientConnector)
+{
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_LONG;
+    
+    // Setting up the fields for COMMAND_LONG
+    message.data.command_long.target_system = 0; // The system which should execute the command, for example, 1 for the first MAV
+    message.data.command_long.target_component = 0; // The component which should execute the command, for example, 0 for a generic component
+    message.data.command_long.command = 0x4246;
+    message.data.command_long.confirmation = 0; // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
+    message.data.command_long.param1 = 0x9c40; // Parameter 1, as defined by MAV_CMD enum
+    message.data.command_long.param2 = 0x45; // Parameter 2, as defined by MAV_CMD enum
+    message.data.command_long.param3 = 0; // Parameter 3, as defined by MAV_CMD enum
+    message.data.command_long.param4 = 0; // Parameter 4, as defined by MAV_CMD enum
+    message.data.command_long.param5 = 0; // Parameter 5, as defined by MAV_CMD enum
+    message.data.command_long.param6 = 0; // Parameter 6, as defined by MAV_CMD enum
+    message.data.command_long.param7 = 0; // Parameter 7, as defined by MAV_CMD enum
+    
+    px4sim_send_message(clientConnector, message);
+}
+
+void px4sim_send_dummy_heartbeat(hako::px4::comm::ICommIO &clientConnector)
+{
+    // HEARTBEATメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HEARTBEAT;
+    message.data.heartbeat.type = MAV_TYPE_GENERIC;
+    message.data.heartbeat.autopilot = 0;
+    message.data.heartbeat.base_mode = 0;
+    message.data.heartbeat.custom_mode = 0;
+    message.data.heartbeat.system_status = 0;
+
+    px4sim_send_message(clientConnector, message);
+}
+static void px4sim_send_system_time(hako::px4::comm::ICommIO &clientConnector, uint64_t time_unix_usec, uint32_t time_boot_ms)
+{
+    // SYSTEM_TIMEメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_SYSTEM_TIME;
+    message.data.system_time.time_unix_usec = time_unix_usec;
+    message.data.system_time.time_boot_ms = time_boot_ms;
+
+    px4sim_send_message(clientConnector, message);
+}
+#if 0
+static void send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    // HIL_STATE_QUATERNIONメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
+    message.data.hil_state_quaternion.time_usec = time_usec;
+    // 以下の値は固定値として設定
+    message.data.hil_state_quaternion.attitude_quaternion[0] = 1.0;
+    message.data.hil_state_quaternion.attitude_quaternion[1] = 0.0;
+    message.data.hil_state_quaternion.attitude_quaternion[2] = 0.0;
+    message.data.hil_state_quaternion.attitude_quaternion[3] = 0.0;
+    message.data.hil_state_quaternion.rollspeed = 0.0;
+    message.data.hil_state_quaternion.pitchspeed = 0.0;
+    message.data.hil_state_quaternion.yawspeed = 0.0;
+    message.data.hil_state_quaternion.lat = 463700; //4c	52	40	1c
+    message.data.hil_state_quaternion.lon = 337732; //44	f4	17	5
+    message.data.hil_state_quaternion.alt = 0;
+    message.data.hil_state_quaternion.vx = 0;
+    message.data.hil_state_quaternion.vy = 0;
+    message.data.hil_state_quaternion.vz = 0;
+    message.data.hil_state_quaternion.ind_airspeed = 0;
+    message.data.hil_state_quaternion.true_airspeed = 0;
+    message.data.hil_state_quaternion.xacc = 0;
+    message.data.hil_state_quaternion.yacc = 0;
+    message.data.hil_state_quaternion.zacc = 0;
+
+    px4sim_send_message(clientConnector, message);
+}
+static void send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    static std::default_random_engine generator;
+    static std::normal_distribution<float> distribution(0.0, 0.01); // 平均: 0, 標準偏差: 0.01
+
+    // HIL_GPSメッセージの準備
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_GPS;
+    message.data.hil_gps.time_usec = time_usec;
+    // 以下の値は固定値として設定
+    message.data.hil_gps.fix_type = 0;  // GPS_FIX_TYPE_3D_FIX
+    message.data.hil_gps.lat = 473977418 + distribution(generator);
+    message.data.hil_gps.lon = 85455939 + distribution(generator);
+    message.data.hil_gps.alt = 488008 + distribution(generator);
+    message.data.hil_gps.eph = 9778;
+    message.data.hil_gps.epv = 9778;
+    message.data.hil_gps.vel = 0;
+    message.data.hil_gps.vn = 0;
+    message.data.hil_gps.ve = 0;
+    message.data.hil_gps.vd = 0;
+    message.data.hil_gps.cog = 0;
+    message.data.hil_gps.satellites_visible = 0;
+    message.data.hil_gps.id = 0;
+    message.data.hil_gps.yaw = 0;
+
+    px4sim_send_message(clientConnector, message);
+}
+
+static auto start_time = std::chrono::system_clock::now();
+
+static void send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
+{
+    // Random noise generator setup
+    static std::default_random_engine generator;
+    static std::normal_distribution<float> distribution(0.0, 0.01); // mean: 0, std_dev: 0.01    
+    MavlinkDecodedMessage message;
+    message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
+    message.data.sensor.time_usec = time_usec;
+    message.data.sensor.xacc = -0.0785347 + distribution(generator);
+    message.data.sensor.yacc = 0.00118181 + distribution(generator);
+    message.data.sensor.zacc = -9.83317 + distribution(generator);
+    message.data.sensor.xgyro = 0.00286057 + distribution(generator);
+    message.data.sensor.ygyro = -0.00736865 + distribution(generator);
+    message.data.sensor.zgyro = -0.00834229 + distribution(generator);
+    message.data.sensor.xmag = 0.217065 + distribution(generator);
+    message.data.sensor.ymag = 0.0063418 + distribution(generator);
+    message.data.sensor.zmag = 0.422639 + distribution(generator);
+    message.data.sensor.abs_pressure = 956.025 + distribution(generator);
+    message.data.sensor.diff_pressure = 0.0f;
+    message.data.sensor.pressure_alt = 0;
+    message.data.sensor.temperature = 0.0f + distribution(generator);
+
+    message.data.sensor.fields_updated = 7167; 
+    message.data.sensor.id = 0;
+
+    px4sim_send_message(clientConnector, message);
+}
+#endif
