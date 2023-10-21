@@ -18,6 +18,8 @@ add_executable(
     mavlink/mavlink_encoder.cpp
     mavlink/mavlink_capture.cpp
     mavlink/mavlink_capture_replay.cpp
+
+    hako/pdu/hako_pdu_data.cpp
     px4sim_main.cpp
 )
 
@@ -27,4 +29,6 @@ target_include_directories(
     PRIVATE /mingw64/include
     PRIVATE ${MAVLINK_SOURCE_DIR}/all
     PRIVATE ${PROJECT_SOURCE_DIR}/src
+    PRIVATE ${HAKONIWA_PDU_SOURCE_DIR}
+    PRIVATE ${HAKONIWA_SOURCE_DIR}
 )
