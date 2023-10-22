@@ -16,35 +16,64 @@ static void px4sim_send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint6
 static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec);
 static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec);
 
-void* px4sim_thread_sender(void *arg)
+static hako::px4::comm::ICommIO *px4_comm_io;
+static uint64_t start_time_usec;
+typedef struct {
+    uint64_t last;
+    uint64_t cycle;
+} Px4SimSenderTimingType;
+typedef struct {
+    Px4SimSenderTimingType heartbeat;
+    Px4SimSenderTimingType system_time;
+    Px4SimSenderTimingType sensor;
+    Px4SimSenderTimingType state_quaternion;
+    Px4SimSenderTimingType gps;
+} Px4SimSenderTimingConfigType;
+static Px4SimSenderTimingConfigType px4sim_sender_timing_config;
+void px4sim_sender_init(hako::px4::comm::ICommIO *comm_io)
 {
-    hako::px4::comm::ICommIO *comm_io = static_cast<hako::px4::comm::ICommIO *>(arg);
+    px4_comm_io = comm_io;
     auto now = std::chrono::system_clock::now();
     auto duration_since_epoch = now.time_since_epoch();
-    uint64_t start_time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
-    int count = 0;
-    while (true) {
-        uint64_t boot_time_usec = (uint64_t)hako_get_current_time_usec();
-        uint64_t time_usec =  start_time_usec + boot_time_usec;
-        if ((count % 1000) == 0) {
-            px4sim_send_dummy_heartbeat(*comm_io);
-        }
-        if ((count % 3991) == 0) {
-            px4sim_send_system_time(*comm_io, time_usec, boot_time_usec/1000);
-        }
-        if ((count % 4) == 0) { 
-            px4sim_send_sensor(*comm_io, time_usec);
-        }
-        if ((count % 8) == 0) { 
-            px4sim_send_hil_state_quaternion(*comm_io, time_usec);
-        }
-        if ((count % 52) == 0) { 
-            px4sim_send_hil_gps(*comm_io, time_usec);
-        }
-        usleep(1 * 1000);  // 1msec
-        count++;
+    start_time_usec = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+
+    memset(&px4sim_sender_timing_config, 0, sizeof(px4sim_sender_timing_config));
+    px4sim_sender_timing_config.heartbeat.cycle = 1000;
+    px4sim_sender_timing_config.system_time.cycle = 3991;
+    px4sim_sender_timing_config.sensor.cycle = 4000;
+    px4sim_sender_timing_config.state_quaternion.cycle = 8000;
+    px4sim_sender_timing_config.gps.cycle = 52000;
+    return;
+}
+static inline bool is_send_cycle(Px4SimSenderTimingType &timing, uint64_t boot_time_usec)
+{
+    if ((boot_time_usec - timing.last) >= timing.cycle) {
+        timing.last = boot_time_usec;
+        return true;
     }
-    return NULL;
+    else {
+        return false;
+    }
+}
+void px4sim_sender_do_task(void)
+{
+    uint64_t boot_time_usec = (uint64_t)hako_get_current_time_usec();
+    uint64_t time_usec =  start_time_usec + boot_time_usec;
+    if (is_send_cycle(px4sim_sender_timing_config.heartbeat, boot_time_usec)) {
+            px4sim_send_dummy_heartbeat(*px4_comm_io);
+    }
+    if (is_send_cycle(px4sim_sender_timing_config.system_time, boot_time_usec)) {
+        px4sim_send_system_time(*px4_comm_io, time_usec, boot_time_usec/1000);
+    }
+    if (is_send_cycle(px4sim_sender_timing_config.sensor, boot_time_usec)) {
+        px4sim_send_sensor(*px4_comm_io, time_usec);
+    }
+    if (is_send_cycle(px4sim_sender_timing_config.state_quaternion, boot_time_usec)) {
+        px4sim_send_hil_state_quaternion(*px4_comm_io, time_usec);
+    }
+    if (is_send_cycle(px4sim_sender_timing_config.gps, boot_time_usec)) {
+        px4sim_send_hil_gps(*px4_comm_io, time_usec);
+    }
 }
 
 

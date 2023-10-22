@@ -2,8 +2,8 @@
 #define _HAKO_PX4_RUNNER_CONFIG_HPP_
 
 #define HAKO_PX4_CHANNLE_ID_HIL_SENSOR              0
-#define HAKO_PX4_CHANNLE_ID_HIL_GPS                 1
-#define HAKO_PX4_CHANNLE_ID_HIL_STATE_QUATERNION    2
+#define HAKO_PX4_CHANNLE_ID_HIL_STATE_QUATERNION    1
+#define HAKO_PX4_CHANNLE_ID_HIL_GPS                 2
 #define HAKO_PX4_CHANNLE_ID_HIL_ACTUATOR_CONTROLS   3
 
 #define HAKO_PX4_RUNNER_MASTER                      true

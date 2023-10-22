@@ -1,6 +1,7 @@
 #include "hako_px4_runner.hpp"
 #include "hako_px4_runner_config.hpp"
 #include "../pdu/hako_pdu_data.hpp"
+#include "../../threads/px4sim_thread_sender.hpp"
 #include <iostream>
 #if HAKO_PX4_RUNNER_MASTER
 #include "hako_capi.h"
@@ -41,6 +42,8 @@ static void my_task()
     if (hako_asset_runner_pdu_read(hako_px4_control.arg->robo_name, HAKO_PX4_CHANNLE_ID_HIL_STATE_QUATERNION, (char*)&hil_state_quaternion, sizeof(hil_state_quaternion))) {
         hako_write_hil_state_quaternion(hil_state_quaternion);
     }
+    //send sensors to px4
+    px4sim_sender_do_task();
 }
 static void my_reset()
 {
@@ -94,6 +97,6 @@ void *hako_px4_runner(void *argp)
 }
 hako_time_t hako_get_current_time_usec()
 {
-    return hako_px4_control.asset_time;
+    return hako_master_get_delta_time_usec();
 }
 
