@@ -3,9 +3,7 @@
 #include "../pdu/hako_pdu_data.hpp"
 #include "../../threads/px4sim_thread_sender.hpp"
 #include <iostream>
-#if HAKO_PX4_RUNNER_MASTER
 #include "hako_capi.h"
-#endif /* HAKO_PX4_RUNNER_MASTER */
 
 typedef struct {
     HakoPx4RunnerArgType *arg;
@@ -69,9 +67,6 @@ void *hako_px4_runner(void *argp)
         hako_px4_control.asset_time = 0;
         std::cout << "INFO: start simulation" << std::endl;
         while (true) {
-#if HAKO_PX4_RUNNER_MASTER
-            (void)hako_master_execute();
-#endif /* HAKO_PX4_RUNNER_MASTER */
             if (hako_asset_runner_step(1) == false) {
                 std::cout << "INFO: stopped simulation" << std::endl;
                 break;

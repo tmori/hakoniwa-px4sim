@@ -2,6 +2,7 @@
 #define _HAKO_PX4_RUNNER_HPP_
 
 #include "hako_asset_runner.h"
+#include "hako_px4_runner_config.hpp"
 
 typedef struct {
     const char* asset_name;

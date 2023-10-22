@@ -10,14 +10,12 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <chrono>
-
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilSensor.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilGps.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilStateQuaternion.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilActuatorControls.hpp"
-#if HAKO_PX4_RUNNER_MASTER
 #include "hako_capi.h"
-#endif /* HAKO_PX4_RUNNER_MASTER */
+#include "hako/runner/hako_px4_master.hpp"
 
 typedef enum {
     REPLAY = 0,
@@ -55,13 +53,28 @@ int main(int argc, char* argv[])
         }
         else {
             mode = NORMAL;
-#if HAKO_PX4_RUNNER_MASTER
             if (!hako_master_init()) {
                 std::cerr << "ERROR: " << "hako_master_init() error" << std::endl;
-                return nullptr;
+                return -1;
+            }
+            else {
+                std::cout << "INFO: hako_master_init() success" << std::endl;
             }
             hako_master_set_config_simtime(HAKO_PX4_RUNNER_MASTER_MAX_DELAY_USEC, HAKO_PX4_RUNNER_MASTER_DELTA_USEC);
-#endif /* HAKO_PX4_RUNNER_MASTER */
+            static HakoPx4RunnerArgType arg;
+            arg.asset_name = "px4sim";
+            arg.config_path = "./custom.json";
+            arg.delta_time_msec = 10;
+            arg.robo_name = "DronePx4";
+            pthread_t thread_1;
+            if (pthread_create(&thread_1, NULL, hako_px4_runner, &arg) != 0) {
+                std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
+                return -1;
+            }
+            if (pthread_create(&thread_1, NULL, hako_px4_master_thread_run, nullptr) != 0) {
+                std::cerr << "Failed to create hako_px4_master_thread_run thread!" << std::endl;
+                return -1;
+            }
         }
         comm_io = server.server_open(&serverEndpoint);
         if (comm_io == nullptr) 
@@ -102,18 +115,8 @@ int main(int argc, char* argv[])
         px4sim_thread_capture(comm_io);
     }
     else if (mode == NORMAL) {
-        pthread_t thread_1;
-        if (pthread_create(&thread_1, NULL, px4sim_thread_receiver, comm_io) != 0) {
-            std::cerr << "Failed to create receiver thread!" << std::endl;
-            return -1;
-        }
         px4sim_sender_init(comm_io);
-        HakoPx4RunnerArgType arg;
-        arg.asset_name = "px4sim";
-        arg.config_path = "./custom.json";
-        arg.delta_time_msec = 10;
-        arg.robo_name = "DronePx4";
-        hako_px4_runner(&arg);
+        px4sim_thread_receiver(comm_io);
     }
 
     comm_io->close();
