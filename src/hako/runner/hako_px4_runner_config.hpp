@@ -6,4 +6,8 @@
 #define HAKO_PX4_CHANNLE_ID_HIL_STATE_QUATERNION    2
 #define HAKO_PX4_CHANNLE_ID_HIL_ACTUATOR_CONTROLS   3
 
+#define HAKO_PX4_RUNNER_MASTER                      true
+#define HAKO_PX4_RUNNER_MASTER_MAX_DELAY_USEC       1000 /* usec*/
+#define HAKO_PX4_RUNNER_MASTER_DELTA_USEC           1000 /* usec*/
+
 #endif /* _HAKO_PX4_RUNNER_CONFIG_HPP_ */

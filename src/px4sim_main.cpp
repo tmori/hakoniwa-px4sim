@@ -11,6 +11,11 @@
 #include <unistd.h>
 #include <chrono>
 
+#include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilSensor.hpp"
+#include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilGps.hpp"
+#include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilStateQuaternion.hpp"
+#include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilActuatorControls.hpp"
+
 typedef enum {
     REPLAY = 0,
     REPLAY_DUMP,
@@ -28,6 +33,10 @@ int main(int argc, char* argv[])
     const char* serverIp = argv[1];
     int serverPort = std::atoi(argv[2]);
     const char* arg_mode = argv[3];
+
+    std::cout << " HakoHilGps size=" << sizeof(Hako_HakoHilGps) << std::endl;
+    std::cout << " Hako_HakoHilSensor size=" << sizeof(Hako_HakoHilSensor) << std::endl;
+    std::cout << " Hako_HakoHilStateQuaternion size=" << sizeof(Hako_HakoHilStateQuaternion) << std::endl;
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
