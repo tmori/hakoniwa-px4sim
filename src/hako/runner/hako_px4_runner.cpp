@@ -59,13 +59,6 @@ static hako_asset_runner_callback_t my_callbacks = {
 
 void *hako_px4_runner(void *argp)
 {
-#if HAKO_PX4_RUNNER_MASTER
-    if (!hako_master_init()) {
-        std::cerr << "ERROR: " << "hako_master_init() error" << std::endl;
-        return nullptr;
-    }
-    hako_master_set_config_simtime(HAKO_PX4_RUNNER_MASTER_MAX_DELAY_USEC, HAKO_PX4_RUNNER_MASTER_DELTA_USEC);
-#endif /* HAKO_PX4_RUNNER_MASTER */
     hako_px4_control.arg = static_cast<HakoPx4RunnerArgType*>(argp);
     if (hako_asset_runner_init(hako_px4_control.arg->asset_name, hako_px4_control.arg->config_path, hako_px4_control.arg->delta_time_msec) == false) {
         std::cerr << "ERROR: " << "hako_asset_runner_init() error" << std::endl;

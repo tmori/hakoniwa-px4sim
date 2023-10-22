@@ -15,6 +15,9 @@
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilGps.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilStateQuaternion.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilActuatorControls.hpp"
+#if HAKO_PX4_RUNNER_MASTER
+#include "hako_capi.h"
+#endif /* HAKO_PX4_RUNNER_MASTER */
 
 typedef enum {
     REPLAY = 0,
@@ -45,15 +48,27 @@ int main(int argc, char* argv[])
         comm_io = nullptr;
         mode = REPLAY_DUMP;
     }
-    else if (strcmp("replay", arg_mode) == 0) {
+    else if ((strcmp("replay", arg_mode) == 0) || (strcmp("normal", arg_mode) == 0)) {
         hako::px4::comm::TcpServer server;
+        if (strcmp("replay", arg_mode) == 0) {
+            mode = REPLAY;
+        }
+        else {
+            mode = NORMAL;
+#if HAKO_PX4_RUNNER_MASTER
+            if (!hako_master_init()) {
+                std::cerr << "ERROR: " << "hako_master_init() error" << std::endl;
+                return nullptr;
+            }
+            hako_master_set_config_simtime(HAKO_PX4_RUNNER_MASTER_MAX_DELAY_USEC, HAKO_PX4_RUNNER_MASTER_DELTA_USEC);
+#endif /* HAKO_PX4_RUNNER_MASTER */
+        }
         comm_io = server.server_open(&serverEndpoint);
         if (comm_io == nullptr) 
         {
-            std::cerr << "Failed to open TCP client" << std::endl;
+            std::cerr << "Failed to open TCP server" << std::endl;
             return -1;
         }
-        mode = REPLAY;
     }
     else if (strcmp("capture", arg_mode) == 0) {
         hako::px4::comm::TcpClient client;
@@ -66,14 +81,8 @@ int main(int argc, char* argv[])
         mode = CAPTURE;
     }
     else {
-        hako::px4::comm::TcpClient client;
-        comm_io = client.client_open(nullptr, &serverEndpoint);
-        if (comm_io == nullptr) 
-        {
-            std::cerr << "Failed to open TCP client" << std::endl;
-            return -1;
-        }
-        mode = NORMAL;
+        std::cerr << "ERROR unknown mode = " << arg_mode << std::endl;
+        return -1;
     }
 
     if (mode == REPLAY) {
