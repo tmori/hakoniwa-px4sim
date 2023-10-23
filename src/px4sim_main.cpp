@@ -35,9 +35,9 @@ int main(int argc, char* argv[])
     int serverPort = std::atoi(argv[2]);
     const char* arg_mode = argv[3];
 
-    //std::cout << " HakoHilGps size=" << sizeof(Hako_HakoHilGps) << std::endl;
-    //std::cout << " Hako_HakoHilSensor size=" << sizeof(Hako_HakoHilSensor) << std::endl;
-    //std::cout << " Hako_HakoHilStateQuaternion size=" << sizeof(Hako_HakoHilStateQuaternion) << std::endl;
+    std::cout << " HakoHilGps size=" << sizeof(Hako_HakoHilGps) << std::endl;
+    std::cout << " Hako_HakoHilSensor size=" << sizeof(Hako_HakoHilSensor) << std::endl;
+    std::cout << " Hako_HakoHilStateQuaternion size=" << sizeof(Hako_HakoHilStateQuaternion) << std::endl;
 
     hako::px4::comm::IcommEndpointType serverEndpoint = { serverIp, serverPort };
 
@@ -82,6 +82,8 @@ int main(int argc, char* argv[])
             std::cerr << "Failed to open TCP server" << std::endl;
             return -1;
         }
+        px4sim_sender_init(comm_io);
+        px4sim_thread_receiver(comm_io);
     }
     else if (strcmp("capture", arg_mode) == 0) {
         hako::px4::comm::TcpClient client;
@@ -113,10 +115,6 @@ int main(int argc, char* argv[])
         px4sim_send_dummy_command_long(*comm_io);
         px4sim_send_dummy_heartbeat(*comm_io);
         px4sim_thread_capture(comm_io);
-    }
-    else if (mode == NORMAL) {
-        px4sim_sender_init(comm_io);
-        px4sim_thread_receiver(comm_io);
     }
 
     comm_io->close();
