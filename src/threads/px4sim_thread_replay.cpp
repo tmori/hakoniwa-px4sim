@@ -119,7 +119,8 @@ void *px4sim_thread_replay_dump(void *arg)
                     exit(1);
                 }
                 mavlink_set_timestamp_for_replay_data(message, start_time_usec + timestamp);
-                mavlink_message_dump(msg, message);
+                mavlink_msg_dump(msg);
+                mavlink_message_dump(message);
             }
             else {
                 std::cerr << "RECV THREAD: Failed to decode data" << std::endl;

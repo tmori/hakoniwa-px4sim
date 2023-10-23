@@ -85,6 +85,6 @@ void *hako_px4_runner(void *argp)
 }
 hako_time_t hako_get_current_time_usec()
 {
-    return hako_master_get_delta_time_usec();
+    return hako_asset_runner_get_world_time();
 }
 

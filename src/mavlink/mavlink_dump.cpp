@@ -4,14 +4,16 @@
 bool px4_data_hb_received = false;
 bool px4_data_long_received = false;
 
-void mavlink_message_dump(mavlink_message_t &msg, MavlinkDecodedMessage &message)
+void mavlink_msg_dump(mavlink_message_t &msg)
 {
     std::cout << "Decoded MAVLink message:" << std::endl;
     std::cout << "  Message ID: " << msg.msgid << std::endl;
     std::cout << "  System ID: " << static_cast<int>(msg.sysid) << std::endl;
     std::cout << "  Component ID: " << static_cast<int>(msg.compid) << std::endl;
     std::cout << "  Sequence: " << static_cast<int>(msg.seq) << std::endl;
-
+}
+void mavlink_message_dump(MavlinkDecodedMessage &message)
+{
     switch (message.type) {
         case MAVLINK_MSG_TYPE_HEARTBEAT:
             std::cout << "  Type: HEARTBEAT" << std::endl;

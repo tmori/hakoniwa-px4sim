@@ -4,7 +4,7 @@
 #include "../comm/tcp_connector.hpp"
 #include "../hako/pdu/hako_pdu_data.hpp"
 #include "../hako/runner/hako_px4_runner.hpp"
-
+#include "../mavlink/mavlink_dump.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <random>
@@ -30,6 +30,7 @@ typedef struct {
     Px4SimSenderTimingType gps;
 } Px4SimSenderTimingConfigType;
 static Px4SimSenderTimingConfigType px4sim_sender_timing_config;
+
 void px4sim_sender_init(hako::px4::comm::ICommIO *comm_io)
 {
     px4_comm_io = comm_io;
@@ -57,10 +58,16 @@ static inline bool is_send_cycle(Px4SimSenderTimingType &timing, uint64_t boot_t
 }
 void px4sim_sender_do_task(void)
 {
+    if (px4_comm_io == nullptr) {
+        return;
+    }
+    //std::cout << "px4sim_sender_do_task: " << std::endl;
     uint64_t boot_time_usec = (uint64_t)hako_get_current_time_usec();
     uint64_t time_usec =  start_time_usec + boot_time_usec;
+    //std::cout << "boot_time_usec: " << boot_time_usec  << std::endl;
+    //std::cout << "time_usec: " << time_usec << std::endl;
     if (is_send_cycle(px4sim_sender_timing_config.heartbeat, boot_time_usec)) {
-            px4sim_send_dummy_heartbeat(*px4_comm_io);
+        px4sim_send_dummy_heartbeat(*px4_comm_io);
     }
     if (is_send_cycle(px4sim_sender_timing_config.system_time, boot_time_usec)) {
         px4sim_send_system_time(*px4_comm_io, time_usec, boot_time_usec/1000);
@@ -90,6 +97,7 @@ void px4sim_send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
             if (clientConnector.send(packet, packetLen, &sentDataLen)) 
             {
                 //std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
+                mavlink_message_dump(message);
             } 
             else 
             {
@@ -148,12 +156,12 @@ static void px4sim_send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint6
     static bool is_initialized = false;
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_GPS;
-    message.data.hil_gps.time_usec = time_usec;
 
     if (hako_mavlink_read_hil_gps(message.data.hil_gps)) {
         is_initialized = true;
     }
     if (is_initialized) {
+        message.data.hil_gps.time_usec = time_usec;
         px4sim_send_message(clientConnector, message);
     }
 }
@@ -162,12 +170,12 @@ static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientCon
     static bool is_initialized = false;
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
-    message.data.hil_state_quaternion.time_usec = time_usec;
 
     if (hako_mavlink_read_hil_state_quaternion(message.data.hil_state_quaternion)) {
         is_initialized = true;
     }
     if (is_initialized) {
+        message.data.hil_state_quaternion.time_usec = time_usec;
         px4sim_send_message(clientConnector, message);
     }
 }
@@ -176,12 +184,12 @@ static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64
     static bool is_initialized = false;
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
-    message.data.sensor.time_usec = time_usec;
 
     if (hako_mavlink_read_hil_sensor(message.data.sensor)) {
         is_initialized = true;
     }
     if (is_initialized) {
+        message.data.sensor.time_usec = time_usec;
         message.data.sensor.fields_updated = 7167; 
         message.data.sensor.id = 0;
         px4sim_send_message(clientConnector, message);
