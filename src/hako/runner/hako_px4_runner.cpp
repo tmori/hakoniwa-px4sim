@@ -74,7 +74,7 @@ void *hako_px4_runner(void *argp)
             }
             else {
                 hako_px4_control.asset_time++;
-                usleep(hako_px4_control.arg->delta_time_msec * 1000);
+                usleep(hako_px4_control.arg->delta_time_msec * 200);
             }
             //std::cout << "STEP" << std::endl;
         }

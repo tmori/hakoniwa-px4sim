@@ -219,10 +219,14 @@ static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64
         //message.data.sensor.zgyro += distribution(generator);
         message.data.sensor.abs_pressure += distribution(generator);
 
+        message.data.sensor.xmag += distribution(generator);
+        message.data.sensor.ymag += distribution(generator);
+        message.data.sensor.zmag += distribution(generator);
+
         //dummy
-        message.data.sensor.xmag = 0.217065 + distribution(generator);
-        message.data.sensor.ymag = 0.0063418 + distribution(generator);
-        message.data.sensor.zmag = 0.422639 + distribution(generator);
+        //message.data.sensor.xmag = 0.217065 + distribution(generator);
+        //message.data.sensor.ymag = 0.0063418 + distribution(generator);
+        //message.data.sensor.zmag = 0.422639 + distribution(generator);
 
         px4sim_send_message(clientConnector, message);
     }
