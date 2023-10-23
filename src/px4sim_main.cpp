@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
             static HakoPx4RunnerArgType arg;
             arg.asset_name = "px4sim";
             arg.config_path = "./custom.json";
-            arg.delta_time_msec = 10;
+            arg.delta_time_msec = 1;
             arg.robo_name = "DronePx4";
             pthread_t thread_1;
             if (pthread_create(&thread_1, NULL, hako_px4_runner, &arg) != 0) {

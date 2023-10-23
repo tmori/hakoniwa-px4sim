@@ -72,7 +72,7 @@ void mavlink_message_dump(MavlinkDecodedMessage &message)
         case MAVLINK_MSG_TYPE_HIL_GPS:
             std::cout << "  Type: HIL_GPS" << std::endl;
             std::cout << "  Time stamp: " << message.data.hil_gps.time_usec << std::endl;
-            std::cout << "  fix_type: " << message.data.hil_gps.fix_type << std::endl;
+            printf("  fix_type: 0x%x\n", message.data.hil_gps.fix_type);
             std::cout << "  Latitude: " << message.data.hil_gps.lat << std::endl;
             std::cout << "  Longitude: " << message.data.hil_gps.lon << std::endl;
             std::cout << "  alt: " << message.data.hil_gps.alt << std::endl;
@@ -84,8 +84,31 @@ void mavlink_message_dump(MavlinkDecodedMessage &message)
             std::cout << "  cog: " << message.data.hil_gps.cog << std::endl;
             std::cout << "  satelites_visible: " << message.data.hil_gps.satellites_visible << std::endl;
             //std::cout << "  id: " << message.data.hil_gps.id << std.endl;
-            printf(" id: 0x%x\n", message.data.hil_gps.id);
+            printf("  id: 0x%x\n", message.data.hil_gps.id);
             std::cout << "  yaw: " << message.data.hil_gps.yaw << std::endl;
+            break;
+        case MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION:
+            std::cout << "  Type: HIL_STATE_QUATERNION" << std::endl;
+            std::cout << "  time_usec: " << message.data.hil_state_quaternion.time_usec << std::endl;
+            std::cout << "  Attitude quaternion (w,x,y,z): " 
+                    << message.data.hil_state_quaternion.attitude_quaternion[0] << ", "
+                    << message.data.hil_state_quaternion.attitude_quaternion[1] << ", "
+                    << message.data.hil_state_quaternion.attitude_quaternion[2] << ", "
+                    << message.data.hil_state_quaternion.attitude_quaternion[3] << std::endl;
+            std::cout << "  Rollspeed: " << message.data.hil_state_quaternion.rollspeed << std::endl;
+            std::cout << "  Pitchspeed: " << message.data.hil_state_quaternion.pitchspeed << std::endl;
+            std::cout << "  Yawspeed: " << message.data.hil_state_quaternion.yawspeed << std::endl;
+            std::cout << "  lat: " << message.data.hil_state_quaternion.lat << std::endl;
+            std::cout << "  lon: " << message.data.hil_state_quaternion.lon << std::endl;
+            std::cout << "  alt: " << message.data.hil_state_quaternion.alt << std::endl;
+            std::cout << "  vx: " << message.data.hil_state_quaternion.vx << std::endl;
+            std::cout << "  vy: " << message.data.hil_state_quaternion.vy << std::endl;
+            std::cout << "  vz: " << message.data.hil_state_quaternion.vz << std::endl;
+            std::cout << "  ind_airspeed: " << message.data.hil_state_quaternion.ind_airspeed << std::endl;
+            std::cout << "  true_airspeed: " << message.data.hil_state_quaternion.true_airspeed << std::endl;
+            std::cout << "  xacc: " << message.data.hil_state_quaternion.xacc << std::endl;
+            std::cout << "  yacc: " << message.data.hil_state_quaternion.yacc << std::endl;
+            std::cout << "  zacc: " << message.data.hil_state_quaternion.zacc << std::endl;
             break;
         default:
             std::cout << "  Unknown or unsupported MAVLink message type received." << std::endl;

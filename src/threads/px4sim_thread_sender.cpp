@@ -97,7 +97,7 @@ void px4sim_send_message(hako::px4::comm::ICommIO &clientConnector, MavlinkDecod
             if (clientConnector.send(packet, packetLen, &sentDataLen)) 
             {
                 //std::cout << "Sent MAVLink message with length: " << sentDataLen << std::endl;
-                mavlink_message_dump(message);
+                //mavlink_message_dump(message);
             } 
             else 
             {
@@ -167,6 +167,8 @@ static void px4sim_send_hil_gps(hako::px4::comm::ICommIO &clientConnector, uint6
 }
 static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
+    static std::default_random_engine generator;
+    static std::normal_distribution<short> distribution(0.0, 10);
     static bool is_initialized = false;
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_STATE_QUATERNION;
@@ -176,11 +178,21 @@ static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientCon
     }
     if (is_initialized) {
         message.data.hil_state_quaternion.time_usec = time_usec;
+
+        //noise
+        message.data.hil_state_quaternion.xacc += distribution(generator);
+        message.data.hil_state_quaternion.yacc += distribution(generator);
+        message.data.hil_state_quaternion.zacc += distribution(generator);
+
         px4sim_send_message(clientConnector, message);
     }
 }
 static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64_t time_usec)
 {
+    // Random noise generator setup
+    static std::default_random_engine generator;
+    static std::normal_distribution<float> distribution(0.0, 0.001);
+
     static bool is_initialized = false;
     MavlinkDecodedMessage message;
     message.type = MAVLINK_MSG_TYPE_HIL_SENSOR;
@@ -189,9 +201,29 @@ static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64
         is_initialized = true;
     }
     if (is_initialized) {
+        //auto now = std::chrono::system_clock::now();
+        //auto duration_since_epoch = now.time_since_epoch();
+        //auto ctime = std::chrono::duration_cast<std::chrono::microseconds>(duration_since_epoch).count();
+        //std::cout << "HIL_SENSOR: time_usec: " <<  ctime << std::endl;
+
         message.data.sensor.time_usec = time_usec;
         message.data.sensor.fields_updated = 7167; 
         message.data.sensor.id = 0;
+
+        //noise
+        message.data.sensor.xacc += distribution(generator);
+        message.data.sensor.yacc += distribution(generator);
+        message.data.sensor.zacc += distribution(generator);
+        message.data.sensor.xgyro += distribution(generator);
+        message.data.sensor.ygyro += distribution(generator);
+        message.data.sensor.zgyro += distribution(generator);
+        message.data.sensor.abs_pressure += distribution(generator);
+
+        //dummy
+        message.data.sensor.xmag = 0.217065 + distribution(generator);
+        message.data.sensor.ymag = 0.0063418 + distribution(generator);
+        message.data.sensor.zmag = 0.422639 + distribution(generator);
+
         px4sim_send_message(clientConnector, message);
     }
 }

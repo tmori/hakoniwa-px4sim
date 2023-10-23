@@ -3,6 +3,7 @@
 #include "../pdu/hako_pdu_data.hpp"
 #include "../../threads/px4sim_thread_sender.hpp"
 #include <iostream>
+#include <unistd.h>
 #include "hako_capi.h"
 
 typedef struct {
@@ -58,7 +59,7 @@ static hako_asset_runner_callback_t my_callbacks = {
 void *hako_px4_runner(void *argp)
 {
     hako_px4_control.arg = static_cast<HakoPx4RunnerArgType*>(argp);
-    if (hako_asset_runner_init(hako_px4_control.arg->asset_name, hako_px4_control.arg->config_path, hako_px4_control.arg->delta_time_msec) == false) {
+    if (hako_asset_runner_init(hako_px4_control.arg->asset_name, hako_px4_control.arg->config_path, hako_px4_control.arg->delta_time_msec * 1000) == false) {
         std::cerr << "ERROR: " << "hako_asset_runner_init() error" << std::endl;
         return nullptr;
     }
@@ -73,6 +74,7 @@ void *hako_px4_runner(void *argp)
             }
             else {
                 hako_px4_control.asset_time++;
+                usleep(hako_px4_control.arg->delta_time_msec * 1000);
             }
             //std::cout << "STEP" << std::endl;
         }
