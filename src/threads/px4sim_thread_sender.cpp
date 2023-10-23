@@ -180,9 +180,9 @@ static void px4sim_send_hil_state_quaternion(hako::px4::comm::ICommIO &clientCon
         message.data.hil_state_quaternion.time_usec = time_usec;
 
         //noise
-        message.data.hil_state_quaternion.xacc += distribution(generator);
-        message.data.hil_state_quaternion.yacc += distribution(generator);
-        message.data.hil_state_quaternion.zacc += distribution(generator);
+        //message.data.hil_state_quaternion.xacc += distribution(generator);
+        //message.data.hil_state_quaternion.yacc += distribution(generator);
+        //message.data.hil_state_quaternion.zacc += distribution(generator);
 
         px4sim_send_message(clientConnector, message);
     }
@@ -211,12 +211,12 @@ static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64
         message.data.sensor.id = 0;
 
         //noise
-        message.data.sensor.xacc += distribution(generator);
-        message.data.sensor.yacc += distribution(generator);
-        message.data.sensor.zacc += distribution(generator);
-        message.data.sensor.xgyro += distribution(generator);
-        message.data.sensor.ygyro += distribution(generator);
-        message.data.sensor.zgyro += distribution(generator);
+        //message.data.sensor.xacc += distribution(generator);
+        //message.data.sensor.yacc += distribution(generator);
+        //message.data.sensor.zacc += distribution(generator);
+        //message.data.sensor.xgyro += distribution(generator);
+        //message.data.sensor.ygyro += distribution(generator);
+        //message.data.sensor.zgyro += distribution(generator);
         message.data.sensor.abs_pressure += distribution(generator);
 
         //dummy
