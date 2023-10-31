@@ -191,7 +191,7 @@ static void px4sim_send_sensor(hako::px4::comm::ICommIO &clientConnector, uint64
 {
     // Random noise generator setup
     static std::default_random_engine generator;
-    static std::normal_distribution<float> distribution(0.0, 0.001);
+    static std::normal_distribution<float> distribution(0.0, 0.0001);
 
     static bool is_initialized = false;
     MavlinkDecodedMessage message;

@@ -5,6 +5,7 @@
 #include "threads/px4sim_thread_replay.hpp"
 #include "threads/px4sim_thread_capture.hpp"
 #include "hako/runner/hako_px4_runner.hpp"
+#include "hako/runner/hako_sim_runner.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <pthread.h>
@@ -21,13 +22,14 @@ typedef enum {
     REPLAY = 0,
     REPLAY_DUMP,
     CAPTURE,
-    NORMAL
+    NORMAL,
+    SIM
 } ModeType;
 
 int main(int argc, char* argv[]) 
 {
     if(argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port> <mode={replay|replay_dump|capture|normal}> "  << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <server_ip> <server_port> <mode={replay|replay_dump|capture|normal|sim}> "  << std::endl;
         return -1;
     }
     ModeType mode = NORMAL;
@@ -45,6 +47,29 @@ int main(int argc, char* argv[])
     if (strcmp("replay_dump", arg_mode) == 0) {
         comm_io = nullptr;
         mode = REPLAY_DUMP;
+    }
+    else if (strcmp("sim", arg_mode) == 0) {
+        comm_io = nullptr;
+        mode = SIM;
+        if (!hako_master_init()) {
+            std::cerr << "ERROR: " << "hako_master_init() error" << std::endl;
+            return -1;
+        }
+        else {
+            std::cout << "INFO: hako_master_init() success" << std::endl;
+        }
+        hako_master_set_config_simtime(HAKO_PX4_RUNNER_MASTER_MAX_DELAY_USEC, HAKO_PX4_RUNNER_MASTER_DELTA_USEC);
+        static HakoPx4RunnerArgType arg;
+        arg.asset_name = "px4sim";
+        arg.config_path = "./custom.json";
+        arg.delta_time_msec = 1;
+        arg.robo_name = "DroneSim";
+        pthread_t thread_1;
+        if (pthread_create(&thread_1, NULL, hako_sim_runner, &arg) != 0) {
+            std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
+            return -1;
+        }
+        hako_px4_master_thread_run(nullptr);
     }
     else if ((strcmp("replay", arg_mode) == 0) || (strcmp("normal", arg_mode) == 0)) {
         hako::px4::comm::TcpServer server;
