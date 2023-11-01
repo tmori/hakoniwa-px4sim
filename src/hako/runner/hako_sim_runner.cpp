@@ -6,6 +6,10 @@
 #include <memory.h>
 #include "hako_capi.h"
 
+#define HAKO_AVATOR_CHANNLE_ID_MOTOR   0
+#define HAKO_AVATOR_CHANNLE_ID_POS   1
+
+
 typedef struct {
     HakoSimRunnerArgType *arg;
     hako_time_t asset_time;
@@ -36,29 +40,32 @@ static void my_setup()
 
 static void do_io()
 {
-    // READ SHARING ACTUATOR AND WRITE PDU ACTUATOR
     Hako_HakoHilActuatorControls hil_actuator_controls;
-    if (hako_read_hil_actuator_controls(hil_actuator_controls)) {
-        if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, 
-                HAKO_PX4_CHANNLE_ID_HIL_ACTUATOR_CONTROLS, 
-                (const char*)&hil_actuator_controls, 
-                sizeof(hil_actuator_controls))) {
-                    std::cerr << "ERROR: can not write pdu data: hil_actuator_controls" << std::endl;
-                }
+    Hako_Twist pos;
+
+    memset(&hil_actuator_controls, 0, sizeof(hil_actuator_controls));
+    for (int i = 0; i < 4; i++)
+        hil_actuator_controls.controls[i] = drone_propeller.w[i];
+    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, 
+            HAKO_AVATOR_CHANNLE_ID_MOTOR, 
+            (const char*)&hil_actuator_controls, 
+            sizeof(hil_actuator_controls))) {
+                std::cerr << "ERROR: can not write pdu data: hil_actuator_controls" << std::endl;
     }
-    // READ PDU SENSOR AND WRITE SHARING SENSOR
-    Hako_HakoHilSensor hil_sensor;
-    Hako_HakoHilGps hil_gps;
-    Hako_HakoHilStateQuaternion hil_state_quaternion;
-    if (hako_asset_runner_pdu_read(hako_sim_control.arg->robo_name, HAKO_PX4_CHANNLE_ID_HIL_SENSOR, (char*)&hil_sensor, sizeof(hil_sensor))) {
-        hako_write_hil_sensor(hil_sensor);
+    pos.linear.x = drone_phys.current.pos.x;
+    pos.linear.y = drone_phys.current.pos.y;
+    pos.linear.z = drone_phys.current.pos.z;
+    pos.angular.x = drone_phys.current.rot.x;
+    pos.angular.y = drone_phys.current.rot.y;
+    pos.angular.z = drone_phys.current.rot.z;
+    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, 
+            HAKO_AVATOR_CHANNLE_ID_POS, 
+            (const char*)&pos, 
+            sizeof(pos))) {
+                std::cerr << "ERROR: can not write pdu data: pos" << std::endl;
     }
-    if (hako_asset_runner_pdu_read(hako_sim_control.arg->robo_name, HAKO_PX4_CHANNLE_ID_HIL_GPS, (char*)&hil_gps, sizeof(hil_gps))) {
-        hako_write_hil_gps(hil_gps);
-    }
-    if (hako_asset_runner_pdu_read(hako_sim_control.arg->robo_name, HAKO_PX4_CHANNLE_ID_HIL_STATE_QUATERNION, (char*)&hil_state_quaternion, sizeof(hil_state_quaternion))) {
-        hako_write_hil_state_quaternion(hil_state_quaternion);
-    }
+
+
 }
 static void my_task()
 {
@@ -67,12 +74,14 @@ static void my_task()
     drone_propeller.w[1] = power;
     drone_propeller.w[2] = power;
     drone_propeller.w[3] = power;
-    do_io();
+
     drone_run(drone_propeller, drone_phys);
     std::cout << "time: " << drone_phys.current_time << std::endl;
     //std::cout << "pos.x = " << drone_phys.current.pos.x << std::endl;
     //std::cout << "pos.y = " << drone_phys.current.pos.y << std::endl;
     std::cout << "pos.z = " << drone_phys.current.pos.z << std::endl;
+
+    do_io();
 }
 
 static void my_reset()

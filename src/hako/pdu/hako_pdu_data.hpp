@@ -5,6 +5,7 @@
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilGps.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilStateQuaternion.hpp"
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilActuatorControls.hpp"
+#include "geometry_msgs/pdu_ctype_Twist.h"
 
 extern bool hako_read_hil_sensor(Hako_HakoHilSensor &hil_sensor);
 extern bool hako_read_hil_gps(Hako_HakoHilGps &hil_gps);
