@@ -52,6 +52,13 @@ static inline void vector3_minus(const Vector3Type& l, const Vector3Type& r, Vec
     ret.y = l.y - r.y;
     ret.z = l.z - r.z;
 }
+static inline void vector3_div(const Vector3Type& l, double r, Vector3Type& ret)
+{
+    ret.x = l.x / r;
+    ret.y = l.y / r;
+    ret.z = l.z / r;
+}
+
 #define DRONE_PROPELLER_NUM 4
 
 typedef struct {
@@ -166,6 +173,7 @@ typedef struct {
      */
     DroneSensorType sensor;
     DroneSensorAverageDataType sensor_acc;
+    Vector3Type prev_vec;
 } DronePhysType;
 
 
