@@ -52,6 +52,16 @@ static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
     phys.sensor.hil_state_quaternion.yacc = ave_acc.y;
     phys.sensor.hil_state_quaternion.zacc = ave_acc.z;
 
+    QuaternionType q;
+    euler2Quaternion(phys.current.rot, q);
+    phys.sensor.hil_state_quaternion.attitude_quaternion[0] = q.w;
+    phys.sensor.hil_state_quaternion.attitude_quaternion[1] = q.x;
+    phys.sensor.hil_state_quaternion.attitude_quaternion[2] = q.y;
+    phys.sensor.hil_state_quaternion.attitude_quaternion[3] = q.z;
+
+    phys.sensor.hil_state_quaternion.ind_airspeed = 0;
+    phys.sensor.hil_state_quaternion.true_airspeed = 0;
+
 }
 static void drone_sensor_run_hil_sensor(DronePhysType &phys)
 {
