@@ -25,7 +25,7 @@ static void my_setup()
     param.l = 0.3;
     param.gravity = 9.81;
     param.k = 1;
-    param.p = 1;
+    param.p = 0.25 ;
     memset(&initial_value, 0, sizeof(initial_value));
     memset(&drone_propeller, 0, sizeof(drone_propeller));
     initial_value.pos.z = 10; //10m
@@ -62,7 +62,11 @@ static void do_io()
 }
 static void my_task()
 {
-    
+    double power = 3.2;
+    drone_propeller.w[0] = power;
+    drone_propeller.w[1] = power;
+    drone_propeller.w[2] = power;
+    drone_propeller.w[3] = power;
     do_io();
     drone_run(drone_propeller, drone_phys);
     std::cout << "time: " << drone_phys.current_time << std::endl;
