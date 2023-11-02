@@ -17,7 +17,7 @@ typedef struct {
         PIDController pid_roll;     // Roll軸制御のためのPID
         PIDController pid_pitch;    // Pitch軸制御のためのPID
         PIDController pid_yaw;      // Yaw軸制御のためのPID
-    } target_orientation_pid;
+    } target_rot;
 
     /*
      * 制御信号

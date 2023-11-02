@@ -31,8 +31,12 @@ static inline void convert2RotationRate(const DroneControlSignalType& signal, co
     std::cout << "torque.y = " << signal.torque.y << std::endl;
     std::cout << "torque.z = " << signal.torque.z << std::endl;
     for (int i = 0; i < DRONE_PROPELLER_NUM; i++) {
+        std::cout << "B: w[" << i << "] = " << out.w[i] << std::endl;
+        if (out.w[i] < 0) {
+            std::cout << "ERROR: minus value w[" << i << "] = " << out.w[i] << std::endl;
+            out.w[i] = 0;
+        }
         out.w[i] = sqrt(out.w[i]);
-        std::cout << "w[" << i << "] = " << out.w[i] << std::endl;
     }
 }
 

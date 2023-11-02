@@ -34,10 +34,12 @@ static void my_setup()
     param.l = 0.3;
     param.gravity = 9.81;
     param.k = 0.5;
-    param.p = 0.25 ;
+    param.p = 0.25;
     memset(&initial_value, 0, sizeof(initial_value));
     memset(&drone_propeller, 0, sizeof(drone_propeller));
-    initial_value.pos.z = 0; //10m
+    initial_value.pos.z = 0;
+    initial_value.pos.y = 0;
+    initial_value.rot.y = 0;
     drone_init(DRONE_PHYS_DELTA_TIME, param, initial_value, drone_phys);
     drone_sensor_init(drone_phys);
     drone_control_init(drone_ctrl, DRONE_PHYS_DELTA_TIME);
@@ -60,9 +62,9 @@ static void do_io_write()
     pos.linear.x = drone_phys.current.pos.x;
     pos.linear.y = drone_phys.current.pos.y;
     pos.linear.z = drone_phys.current.pos.z;
-    pos.angular.x = drone_phys.current.rot.x;
-    pos.angular.y = drone_phys.current.rot.y;
-    pos.angular.z = drone_phys.current.rot.z;
+    pos.angular.x = drone_phys.current.rot.x * (180.0 / M_PI);
+    pos.angular.y = drone_phys.current.rot.y * (180.0 / M_PI);
+    pos.angular.z = drone_phys.current.rot.z * (180.0 / M_PI);
     if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, HAKO_AVATOR_CHANNLE_ID_POS, (const char*)&pos, sizeof(pos))) {
         std::cerr << "ERROR: can not write pdu data: pos" << std::endl;
     }
@@ -77,7 +79,8 @@ static void my_task()
 {
     drone_run(drone_propeller, drone_phys);
     //std::cout << "time: " << drone_phys.current_time << std::endl;
-    //std::cout << "rot.z = " << drone_phys.current.rot.z << std::endl;
+    std::cout << "lat = " << drone_phys.sensor.hil_gps.lat << std::endl;
+    std::cout << "lon = " << drone_phys.sensor.hil_gps.lon << std::endl;
     //std::cout << "pos.z = " << drone_phys.current.pos.z << std::endl;
     drone_sensor_run(drone_phys);
 

@@ -4,6 +4,8 @@
 #include <math.h>
 
 #define DRONE_PROPELLER_NUM 4
+#define DRONE_GPS_INIT_LAT  356895000
+#define DRONE_GPS_INIT_LON  1396917000
 
 typedef struct {
     double x;
@@ -32,6 +34,25 @@ static inline void euler2Quaternion(const Vector3Type& e, QuaternionType& ret)
     ret.x = sr * cp * cy - cr * sp * sy;
     ret.y = cr * sp * cy + sr * cp * sy;
     ret.z = cr * cp * sy - sr * sp * cy;
+}
+static inline void quaternion2Euler(const QuaternionType& q, Vector3Type& ret) 
+{
+    // roll (x-axis rotation)
+    double sinr_cosp = 2.0 * (q.w * q.x + q.y * q.z);
+    double cosr_cosp = 1.0 - 2.0 * (q.x * q.x + q.y * q.y);
+    ret.x = atan2(sinr_cosp, cosr_cosp);
+
+    // pitch (y-axis rotation)
+    double sinp = 2.0 * (q.w * q.y - q.z * q.x);
+    if (abs(sinp) >= 1)
+        ret.y = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+    else
+        ret.y = asin(sinp);
+
+    // yaw (z-axis rotation)
+    double siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
+    double cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+    ret.z = atan2(siny_cosp, cosy_cosp);
 }
 
 static inline void vector3_plus(const Vector3Type& l, const Vector3Type& r, Vector3Type& ret)
