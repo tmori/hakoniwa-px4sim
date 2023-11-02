@@ -7,6 +7,12 @@
 #define DRONE_GPS_INIT_LAT  356895000
 #define DRONE_GPS_INIT_LON  1396917000
 
+#define DRONE_PARAM_M       1.0
+#define DRONE_PARAM_L       0.3
+#define DRONE_PARAM_GRAVITY 9.81
+#define DRONE_PARAM_K        0.5
+#define DRONE_PARAM_P       0.25
+
 typedef struct {
     double x;
     double y;

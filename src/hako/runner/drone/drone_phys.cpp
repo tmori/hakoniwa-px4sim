@@ -99,6 +99,11 @@ static void drone_run_z(double u, DronePhysType& phys)
     if (phys.next.pos.z < 0) {
       phys.next.pos.z = 0;
     }
+    //std::cout << "u = " << u << std::endl;
+    //std::cout << "curr rot.y = " << phys.current.rot.y << std::endl;
+    //std::cout << "curr rot.x = " << phys.current.rot.x << std::endl;
+    //std::cout << "curr rot.y cos= " << cos(phys.current.rot.y) << std::endl;
+    //std::cout << "curr rot.x cos= " << cos(phys.current.rot.x) << std::endl;
     std::cout << "next pos.z = " << phys.next.pos.z << std::endl;
     std::cout << "next vec.z = " << phys.next.vec.z << std::endl;
     return;

@@ -30,11 +30,11 @@ static void my_setup()
     std::cout << "INFO: setup start" << std::endl;
     DronePhysParamType param;
     DronePhysStateType initial_value;
-    param.m = 1;
-    param.l = 0.3;
-    param.gravity = 9.81;
-    param.k = 0.5;
-    param.p = 0.25;
+    param.m = DRONE_PARAM_M;
+    param.l = DRONE_PARAM_L;
+    param.gravity = DRONE_PARAM_GRAVITY;
+    param.k = DRONE_PARAM_K;
+    param.p = DRONE_PARAM_P;
     memset(&initial_value, 0, sizeof(initial_value));
     memset(&drone_propeller, 0, sizeof(drone_propeller));
     initial_value.pos.z = 0;
