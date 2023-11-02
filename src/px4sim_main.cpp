@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
         mode = REPLAY_DUMP;
     }
     else if (strcmp("sim", arg_mode) == 0) {
+        hako::px4::comm::TcpServer server;
         comm_io = nullptr;
         mode = SIM;
         if (!hako_master_init()) {
@@ -69,7 +70,18 @@ int main(int argc, char* argv[])
             std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
             return -1;
         }
-        hako_px4_master_thread_run(nullptr);
+        if (pthread_create(&thread_1, NULL, hako_px4_master_thread_run, nullptr) != 0) {
+            std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
+            return -1;
+        }
+        comm_io = server.server_open(&serverEndpoint);
+        if (comm_io == nullptr) 
+        {
+            std::cerr << "Failed to open TCP server" << std::endl;
+            return -1;
+        }
+        px4sim_sender_init(comm_io);
+        px4sim_thread_receiver(comm_io);
     }
     else if ((strcmp("replay", arg_mode) == 0) || (strcmp("normal", arg_mode) == 0)) {
         hako::px4::comm::TcpServer server;

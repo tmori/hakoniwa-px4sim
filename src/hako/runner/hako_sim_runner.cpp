@@ -1,6 +1,8 @@
 #include "hako_sim_runner.hpp"
 #include "../pdu/hako_pdu_data.hpp"
 #include "drone/drone_phys.hpp"
+#include "drone/drone_phys_sensor.hpp"
+#include "../../threads/px4sim_thread_sender.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <memory.h>
@@ -34,23 +36,22 @@ static void my_setup()
     memset(&drone_propeller, 0, sizeof(drone_propeller));
     initial_value.pos.z = 0; //10m
     drone_init(DRONE_PHYS_DELTA_TIME, param, initial_value, drone_phys);
+    drone_sensor_init(drone_phys);
     std::cout << "INFO: setup done" << std::endl;
     return;
 }
 
-static void do_io()
+static void do_io_write()
 {
     Hako_HakoHilActuatorControls hil_actuator_controls;
     Hako_Twist pos;
 
     memset(&hil_actuator_controls, 0, sizeof(hil_actuator_controls));
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
         hil_actuator_controls.controls[i] = drone_propeller.w[i];
-    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, 
-            HAKO_AVATOR_CHANNLE_ID_MOTOR, 
-            (const char*)&hil_actuator_controls, 
-            sizeof(hil_actuator_controls))) {
-                std::cerr << "ERROR: can not write pdu data: hil_actuator_controls" << std::endl;
+    }
+    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, HAKO_AVATOR_CHANNLE_ID_MOTOR, (const char*)&hil_actuator_controls, sizeof(hil_actuator_controls))) {
+        std::cerr << "ERROR: can not write pdu data: hil_actuator_controls" << std::endl;
     }
     pos.linear.x = drone_phys.current.pos.x;
     pos.linear.y = drone_phys.current.pos.y;
@@ -58,30 +59,34 @@ static void do_io()
     pos.angular.x = drone_phys.current.rot.x;
     pos.angular.y = drone_phys.current.rot.y;
     pos.angular.z = drone_phys.current.rot.z;
-    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, 
-            HAKO_AVATOR_CHANNLE_ID_POS, 
-            (const char*)&pos, 
-            sizeof(pos))) {
-                std::cerr << "ERROR: can not write pdu data: pos" << std::endl;
+    if (!hako_asset_runner_pdu_write(hako_sim_control.arg->robo_name, HAKO_AVATOR_CHANNLE_ID_POS, (const char*)&pos, sizeof(pos))) {
+        std::cerr << "ERROR: can not write pdu data: pos" << std::endl;
     }
 
-
+    //TO sender shared data
+    hako_write_hil_state_quaternion(drone_phys.sensor.hil_state_quaternion);
+    hako_write_hil_sensor(drone_phys.sensor.hil_sensor);
+    hako_write_hil_gps(drone_phys.sensor.hil_gps);
 }
 static void my_task()
 {
-    double power = 3.2;
-    double delta = 0.4;
-    drone_propeller.w[0] = power + delta; //fr:f1
-    drone_propeller.w[1] = power - delta; //bl:f2
-    drone_propeller.w[2] = power + delta; //fl:f3
-    drone_propeller.w[3] = power - delta; //br:f4
+    if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
+        drone_propeller.w[0] = drone_phys.actuator.hil_actuator_controls.controls[0];
+        drone_propeller.w[1] = drone_phys.actuator.hil_actuator_controls.controls[1];
+        drone_propeller.w[2] = drone_phys.actuator.hil_actuator_controls.controls[2];
+        drone_propeller.w[3] = drone_phys.actuator.hil_actuator_controls.controls[3];
+    }
 
     drone_run(drone_propeller, drone_phys);
-    std::cout << "time: " << drone_phys.current_time << std::endl;
-    std::cout << "rot.z = " << drone_phys.current.rot.z << std::endl;
-    std::cout << "pos.z = " << drone_phys.current.pos.z << std::endl;
+    //std::cout << "time: " << drone_phys.current_time << std::endl;
+    //std::cout << "rot.z = " << drone_phys.current.rot.z << std::endl;
+    //std::cout << "pos.z = " << drone_phys.current.pos.z << std::endl;
+    drone_sensor_run(drone_phys);
 
-    do_io();
+    do_io_write();
+
+    px4sim_sender_do_task();
+    return;
 }
 
 static void my_reset()

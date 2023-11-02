@@ -31,7 +31,7 @@ static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys);
 static void drone_sensor_run_hil_sensor(DronePhysType &phys);
 static void drone_sensor_run_hil_gps(DronePhysType &phys);
 
-void droner_sensor_run(DronePhysType &phys)
+void drone_sensor_run(DronePhysType &phys)
 {
     drone_sensor_run_hil_state_quaternion(phys);
     drone_sensor_run_hil_sensor(phys);
@@ -40,7 +40,6 @@ void droner_sensor_run(DronePhysType &phys)
 
 static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
 {
-    //TODO
     phys.sensor.hil_state_quaternion.time_usec = 0;
     
     phys.sensor.hil_state_quaternion.rollspeed = phys.current.rot_vec.x;

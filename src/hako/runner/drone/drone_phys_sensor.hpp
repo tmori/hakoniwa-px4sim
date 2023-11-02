@@ -4,6 +4,6 @@
 #include "drone_phys.hpp"
 
 extern void drone_sensor_init(DronePhysType &phys);
-extern void droner_sensor_run(DronePhysType &phys);
+extern void drone_sensor_run(DronePhysType &phys);
 
 #endif /* _DRONE_PHYS_SENSOR_HPP_ */

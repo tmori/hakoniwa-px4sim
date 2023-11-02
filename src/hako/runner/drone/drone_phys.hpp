@@ -12,6 +12,10 @@ typedef struct {
     Hako_HakoHilStateQuaternion hil_state_quaternion;
 } DroneSensorType;
 
+typedef struct {
+    Hako_HakoHilActuatorControls hil_actuator_controls;
+} DroneActuatorType;
+
 
 typedef struct {
     double x;
@@ -201,6 +205,15 @@ typedef struct {
     double current_time;
     DronePhysStateType current;
     DronePhysStateType next;
+
+
+    /*
+     * for other module communication data:
+     */
+    /*
+     * Actuators
+     */
+    DroneActuatorType actuator;
     /*
      * Sensors
      */

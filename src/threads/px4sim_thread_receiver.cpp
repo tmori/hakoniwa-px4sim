@@ -47,8 +47,8 @@ void *px4sim_thread_receiver(void *arg)
                 MavlinkDecodedMessage message;
                 ret = mavlink_get_message(&msg, &message);
                 if (ret) {
-                    mavlink_msg_dump(msg);
-                    mavlink_message_dump(message);
+                    //mavlink_msg_dump(msg);
+                    //mavlink_message_dump(message);
                     hako_mavlink_write_data(message);
                 }
             }
