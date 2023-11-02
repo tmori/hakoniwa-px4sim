@@ -70,6 +70,9 @@ int main(int argc, char* argv[])
             std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
             return -1;
         }
+#if 1
+        hako_px4_master_thread_run(nullptr);
+#else        
         if (pthread_create(&thread_1, NULL, hako_px4_master_thread_run, nullptr) != 0) {
             std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
             return -1;
@@ -82,6 +85,7 @@ int main(int argc, char* argv[])
         }
         px4sim_sender_init(comm_io);
         px4sim_thread_receiver(comm_io);
+#endif
     }
     else if ((strcmp("replay", arg_mode) == 0) || (strcmp("normal", arg_mode) == 0)) {
         hako::px4::comm::TcpServer server;

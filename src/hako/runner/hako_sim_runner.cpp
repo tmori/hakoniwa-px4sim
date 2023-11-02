@@ -3,6 +3,8 @@
 #include "drone/drone_phys.hpp"
 #include "drone/drone_phys_sensor.hpp"
 #include "../../threads/px4sim_thread_sender.hpp"
+#include "control/drone_control.hpp"
+#include "drone/drone_phys_control.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <memory.h>
@@ -18,6 +20,7 @@ typedef struct {
 } HakoSimControlType;
 HakoSimControlType hako_sim_control;
 
+static DroneControlType drone_ctrl;
 static DronePhysType drone_phys;
 static DronePropellerRotationRateType drone_propeller;
 
@@ -37,6 +40,7 @@ static void my_setup()
     initial_value.pos.z = 0; //10m
     drone_init(DRONE_PHYS_DELTA_TIME, param, initial_value, drone_phys);
     drone_sensor_init(drone_phys);
+    drone_control_init(drone_ctrl, DRONE_PHYS_DELTA_TIME);
     std::cout << "INFO: setup done" << std::endl;
     return;
 }
@@ -68,15 +72,9 @@ static void do_io_write()
     hako_write_hil_sensor(drone_phys.sensor.hil_sensor);
     hako_write_hil_gps(drone_phys.sensor.hil_gps);
 }
+#define KEISU   10.0f
 static void my_task()
 {
-    if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
-        drone_propeller.w[0] = drone_phys.actuator.hil_actuator_controls.controls[0];
-        drone_propeller.w[1] = drone_phys.actuator.hil_actuator_controls.controls[1];
-        drone_propeller.w[2] = drone_phys.actuator.hil_actuator_controls.controls[2];
-        drone_propeller.w[3] = drone_phys.actuator.hil_actuator_controls.controls[3];
-    }
-
     drone_run(drone_propeller, drone_phys);
     //std::cout << "time: " << drone_phys.current_time << std::endl;
     //std::cout << "rot.z = " << drone_phys.current.rot.z << std::endl;
@@ -85,7 +83,9 @@ static void my_task()
 
     do_io_write();
 
-    px4sim_sender_do_task();
+    //px4sim_sender_do_task();
+    drone_control_run(drone_ctrl);
+    convert2RotationRate(drone_ctrl.signal, drone_phys, drone_propeller);
     return;
 }
 
