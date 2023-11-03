@@ -17,6 +17,7 @@
 #include "hako_mavlink_msgs/pdu_ctype_conv_mavlink_HakoHilActuatorControls.hpp"
 #include "hako_capi.h"
 #include "hako/runner/hako_px4_master.hpp"
+#include "hako/runner/common/drone_types.hpp"
 
 typedef enum {
     REPLAY = 0,
@@ -70,9 +71,7 @@ int main(int argc, char* argv[])
             std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
             return -1;
         }
-#if 1
-        hako_px4_master_thread_run(nullptr);
-#else        
+#ifdef DRONE_PX4_CONTROL_ENABLE
         if (pthread_create(&thread_1, NULL, hako_px4_master_thread_run, nullptr) != 0) {
             std::cerr << "Failed to create hako_px4_runner thread!" << std::endl;
             return -1;
@@ -85,6 +84,8 @@ int main(int argc, char* argv[])
         }
         px4sim_sender_init(comm_io);
         px4sim_thread_receiver(comm_io);
+#else
+        hako_px4_master_thread_run(nullptr);
 #endif
     }
     else if ((strcmp("replay", arg_mode) == 0) || (strcmp("normal", arg_mode) == 0)) {

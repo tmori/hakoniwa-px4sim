@@ -92,7 +92,9 @@ void drone_control_run(DroneControlType& ctrl)
     }
     // PID制御の計算
     ctrl.signal.thrust = updatePID(ctrl.target_pos.pid_z, hil_state_quaternion.alt, ctrl.delta_t) / 1000.0f;
+#ifdef ENABLE_DRONE_PHYS_DEBUG
     std::cout << "ctrl.target_pos.pid_z.previous_error= " << ctrl.target_pos.pid_z.previous_error << std::endl;
+#endif
     ctrl.signal.thrust = get_value_with_limit(ctrl.signal.thrust, DRONE_THRUST_MAX, DRONE_THRUST_MIN);
     QuaternionType q;
     Vector3Type angle;
@@ -101,14 +103,17 @@ void drone_control_run(DroneControlType& ctrl)
     q.y = hil_state_quaternion.attitude_quaternion[2];
     q.z = hil_state_quaternion.attitude_quaternion[3];
     quaternion2Euler(q, angle);
+#ifdef ENABLE_DRONE_PHYS_DEBUG
     std::cout << "angle.x = " << angle.x << std::endl;
     std::cout << "angle.y = " << angle.y << std::endl;
     std::cout << "angle.z = " << angle.z << std::endl;
     std::cout << "hil_state_quaternion.lon= " << hil_state_quaternion.lon << std::endl;
-
+#endif
     // roll power
     static Vector3Type roll_power_for_move = { 0, 0, 0 };
+#ifdef ENABLE_DRONE_PHYS_DEBUG
     std::cout << "ctrl.target_rot.pid_roll.previous_error= " << ctrl.target_rot.pid_roll.previous_error << std::endl;
+#endif
     int c = getc(stdin);
     if (c == 'j') { // move left
         std::cout << "key=" << c << std::endl;
@@ -145,12 +150,14 @@ void drone_control_run(DroneControlType& ctrl)
     ctrl.target_rot.pid_yaw.setpoint = roll_power_for_move.z;
     roll_power_for_same.z = updatePID(ctrl.target_rot.pid_yaw, angle.z, ctrl.delta_t);
 
+#ifdef ENABLE_DRONE_PHYS_DEBUG
     std::cout << "roll_power_for_move.x= " << roll_power_for_move.x << std::endl;
     std::cout << "roll_power_for_same.x= " << roll_power_for_same.x << std::endl;
     std::cout << "roll_power_for_move.y= " << roll_power_for_move.y << std::endl;
     std::cout << "roll_power_for_same.y= " << roll_power_for_same.y << std::endl;
     std::cout << "roll_power_for_move.z= " << roll_power_for_move.z << std::endl;
     std::cout << "roll_power_for_same.z= " << roll_power_for_same.z << std::endl;
+#endif
     double torque_x = roll_power_for_move.x + roll_power_for_same.x;
     double torque_x_max = ctrl.signal.thrust * DRONE_PARAM_L / (2.0 * DRONE_TORQUE_X_MAX_RATE);
     ctrl.signal.torque.x = get_value_with_limit(torque_x, torque_x_max, -torque_x_max);

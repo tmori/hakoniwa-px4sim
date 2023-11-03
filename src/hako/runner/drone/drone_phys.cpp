@@ -57,8 +57,10 @@ static void drone_run_x(double u, DronePhysType& phys)
                   + phys.current.vec.x;
 
     phys.next.pos.x = (phys.current.vec.x * phys.delta_t) + phys.current.pos.x;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next pos.x = " << phys.next.pos.x << std::endl;
     std::cout << "next vec.x = " << phys.next.vec.x << std::endl;
+#endif
     return;
 }
 
@@ -77,8 +79,10 @@ static void drone_run_y(double u, DronePhysType& phys)
                   + phys.current.vec.y;
 
     phys.next.pos.y = (phys.current.vec.y * phys.delta_t) + phys.current.pos.y;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next pos.y = " << phys.next.pos.y << std::endl;
     std::cout << "next vec.y = " << phys.next.vec.y << std::endl;
+#endif
     return;
 }
 static void drone_run_z(double u, DronePhysType& phys)
@@ -104,38 +108,44 @@ static void drone_run_z(double u, DronePhysType& phys)
     //std::cout << "curr rot.x = " << phys.current.rot.x << std::endl;
     //std::cout << "curr rot.y cos= " << cos(phys.current.rot.y) << std::endl;
     //std::cout << "curr rot.x cos= " << cos(phys.current.rot.x) << std::endl;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next pos.z = " << phys.next.pos.z << std::endl;
     std::cout << "next vec.z = " << phys.next.vec.z << std::endl;
+#endif
     return;
 }
 
 static void drone_run_rx(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#if 1
+#ifdef DRONE_PX4_CONTROL_ENABLE
+    double torque_phi = + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / 2.0f)
+                        - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / 2.0f);
+#else
     double torque_phi = - phys.param.l * phys.param.p * propeller.w[1] * propeller.w[1]
                         + phys.param.l * phys.param.p * propeller.w[3] * propeller.w[3];
-#else
-    double torque_phi = - (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / 2.0f)
-                        + (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #endif
     phys.next.rot_vec.x = torque_phi * phys.delta_t + phys.current.rot_vec.x;
     phys.next.rot.x     = (phys.current.rot_vec.x * phys.delta_t) + phys.current.rot.x;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next rot.x = " << phys.next.rot.x << std::endl;
     std::cout << "next rot_vec.x = " << phys.next.rot_vec.x << std::endl;
+#endif
 }
 static void drone_run_ry(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#if 1
+#ifdef DRONE_PX4_CONTROL_ENABLE
+    double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[2] * propeller.w[2]) / 2.0f)
+                          + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[3] * propeller.w[3]) / 2.0f);
+#else
     double torque_theta = - phys.param.l * phys.param.p * propeller.w[0] * propeller.w[0]
                         + phys.param.l * phys.param.p * propeller.w[2] * propeller.w[2];
-#else
-    double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[1] * propeller.w[1]) / 2.0f)
-                          + (phys.param.l * phys.param.p * ( propeller.w[2] * propeller.w[2] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #endif
     phys.next.rot_vec.y = torque_theta * phys.delta_t + phys.current.rot_vec.y;
     phys.next.rot.y     = (phys.current.rot_vec.y * phys.delta_t) + phys.current.rot.y;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next rot.y = " << phys.next.rot.y << std::endl;
     std::cout << "next rot_vec.y = " << phys.next.rot_vec.y << std::endl;
+#endif
 }
 static void drone_run_rz(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
@@ -146,7 +156,9 @@ static void drone_run_rz(const DronePropellerRotationRateType& propeller, DroneP
 
     phys.next.rot_vec.z = torque_psi * phys.delta_t + phys.current.rot_vec.z;
     phys.next.rot.z     = (phys.current.rot_vec.z * phys.delta_t) + phys.current.rot.z;
+#ifdef ENABLE_DRONE_PHYS_DEBUG    
     std::cout << "next rot.z = " << phys.next.rot.z << std::endl;
     std::cout << "next rot_vec.z = " << phys.next.rot_vec.z << std::endl;
+#endif
 }
 

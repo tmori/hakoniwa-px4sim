@@ -74,21 +74,36 @@ static void do_io_write()
     hako_write_hil_sensor(drone_phys.sensor.hil_sensor);
     hako_write_hil_gps(drone_phys.sensor.hil_gps);
 }
-#define KEISU   10.0f
 static void my_task()
 {
+#ifdef DRONE_PX4_CONTROL_ENABLE
+#define KEISU   4.0f
+    if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
+        double fr = drone_phys.actuator.hil_actuator_controls.controls[0];//fr
+        double fl = drone_phys.actuator.hil_actuator_controls.controls[2];//fl
+        double br = drone_phys.actuator.hil_actuator_controls.controls[3];//br
+        double bl = drone_phys.actuator.hil_actuator_controls.controls[1];//bl
+        drone_propeller.w[0] = KEISU * fr;
+        drone_propeller.w[1] = KEISU * bl;
+        drone_propeller.w[2] = KEISU * fl;
+        drone_propeller.w[3] = KEISU * br;
+    }
+#endif
     drone_run(drone_propeller, drone_phys);
     //std::cout << "time: " << drone_phys.current_time << std::endl;
-    std::cout << "lat = " << drone_phys.sensor.hil_gps.lat << std::endl;
-    std::cout << "lon = " << drone_phys.sensor.hil_gps.lon << std::endl;
+    //std::cout << "lat = " << drone_phys.sensor.hil_gps.lat << std::endl;
+    //std::cout << "lon = " << drone_phys.sensor.hil_gps.lon << std::endl;
     //std::cout << "pos.z = " << drone_phys.current.pos.z << std::endl;
     drone_sensor_run(drone_phys);
 
     do_io_write();
 
-    //px4sim_sender_do_task();
+#ifdef DRONE_PX4_CONTROL_ENABLE
+    px4sim_sender_do_task();
+#else
     drone_control_run(drone_ctrl);
     convert2RotationRate(drone_ctrl.signal, drone_phys, drone_propeller);
+#endif
     return;
 }
 
