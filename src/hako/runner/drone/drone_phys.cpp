@@ -117,7 +117,7 @@ static void drone_run_z(double u, DronePhysType& phys)
 
 static void drone_run_rx(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#ifdef DRONE_PX4_CONTROL_ENABLE
+#if 0
     double torque_phi = + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / 2.0f)
                         - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #else
@@ -133,7 +133,7 @@ static void drone_run_rx(const DronePropellerRotationRateType& propeller, DroneP
 }
 static void drone_run_ry(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#ifdef DRONE_PX4_CONTROL_ENABLE
+#if 0
     double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[2] * propeller.w[2]) / 2.0f)
                           + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #else

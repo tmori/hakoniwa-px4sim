@@ -79,14 +79,10 @@ static void my_task()
 #ifdef DRONE_PX4_CONTROL_ENABLE
 #define KEISU   4.0f
     if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
-        double fr = drone_phys.actuator.hil_actuator_controls.controls[0];//fr
-        double fl = drone_phys.actuator.hil_actuator_controls.controls[2];//fl
-        double br = drone_phys.actuator.hil_actuator_controls.controls[3];//br
-        double bl = drone_phys.actuator.hil_actuator_controls.controls[1];//bl
-        drone_propeller.w[0] = KEISU * fr;
-        drone_propeller.w[1] = KEISU * bl;
-        drone_propeller.w[2] = KEISU * fl;
-        drone_propeller.w[3] = KEISU * br;
+        drone_propeller.w[0] = KEISU * drone_phys.actuator.hil_actuator_controls.controls[2];
+        drone_propeller.w[1] = KEISU * drone_phys.actuator.hil_actuator_controls.controls[0];
+        drone_propeller.w[2] = KEISU * drone_phys.actuator.hil_actuator_controls.controls[3];
+        drone_propeller.w[3] = KEISU * drone_phys.actuator.hil_actuator_controls.controls[1];
     }
 #endif
     drone_run(drone_propeller, drone_phys);
