@@ -116,31 +116,31 @@ void drone_control_run(DroneControlType& ctrl)
 #endif
     int c = getc(stdin);
     if (c == 'j') { // move left
-        std::cout << "key=" << c << std::endl;
+        std::cout << "MOVE LEFT: key=" << c << std::endl;
         roll_power_for_move.x = -1.0;
     }
     else if (c == 'l') { //move right
-        std::cout << "key=" << c << std::endl;
+        std::cout << "MOVE RIGHT: key=" << c << std::endl;
         roll_power_for_move.x= 1.0;
     }
     else if (c == 'i') { // move forward
-        std::cout << "key=" << c << std::endl;
+        std::cout << "MOVE FORWARD: key=" << c << std::endl;
         roll_power_for_move.y= 1.0;
     }
     else if (c == 'm') { // move back
-        std::cout << "key=" << c << std::endl;
+        std::cout << "MOVE BACK: key=" << c << std::endl;
         roll_power_for_move.y= -1.0;
     }
     else if (c == 'g') { //turn right
-        std::cout << "key=" << c << std::endl;
+        std::cout << "TURN RIGHT: key=" << c << std::endl;
         roll_power_for_move.z -= 90.0 * (M_PI / 180.0);
     }
     else if (c == 'f') { //turn left
-        std::cout << "key=" << c << std::endl;
+        std::cout << "TURN LEFT: key=" << c << std::endl;
         roll_power_for_move.z += 90.0 * (M_PI / 180.0);
     }
     else if (c == ' ') {
-        std::cout << "key=" << c << std::endl;
+        std::cout << "RESET: key=" << c << std::endl;
         roll_power_for_move.x = 0;
         roll_power_for_move.y = 0;
     }

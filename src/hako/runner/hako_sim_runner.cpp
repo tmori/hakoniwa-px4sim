@@ -37,9 +37,7 @@ static void my_setup()
     param.p = DRONE_PARAM_P;
     memset(&initial_value, 0, sizeof(initial_value));
     memset(&drone_propeller, 0, sizeof(drone_propeller));
-    initial_value.pos.x = 0.1;
-    initial_value.pos.y = 0.01;
-    initial_value.pos.z = 8.1;
+    initial_value.pos.x = 0;
     initial_value.pos.y = 0;
     initial_value.rot.y = 0;
     drone_init(DRONE_PHYS_DELTA_TIME, param, initial_value, drone_phys);
@@ -79,8 +77,8 @@ static void do_io_write()
 static void my_task()
 {
 #ifdef DRONE_PX4_CONTROL_ENABLE
-#define KEISU   16.0f
-#define ttsqrt(a) sqrt(a)
+#define KEISU   4.0f
+#define ttsqrt(a) (a)
     if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
         drone_propeller.w[0] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[0]);
         drone_propeller.w[1] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[1]);

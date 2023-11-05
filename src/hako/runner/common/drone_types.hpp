@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-#define DRONE_PX4_CONTROL_ENABLE
+//#define DRONE_PX4_CONTROL_ENABLE
 //#define ENABLE_DRONE_PHYS_DEBUG
 
 #define DRONE_PROPELLER_NUM 4
