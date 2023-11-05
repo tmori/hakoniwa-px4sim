@@ -1,4 +1,6 @@
 #include "drone_phys_sensor.hpp"
+#include <iostream>
+
 #define HIL_GPS_UP_CYCLE                60  /* msec*/
 #define HIL_STATE_QUATERNION_UP_CYCLE    4  /* msec*/
 #define HIL_SENSOR_UP_CYCLE              4 /* msec*/
@@ -56,6 +58,7 @@ static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
     Vector3Type ave_acc;
     vector3_minus(phys.current.vec, phys.prev_vec, acc_1);
     vector3_div(acc_1, phys.delta_t, acc);
+    acc.z -= phys.param.gravity;
     phys.prev_vec = phys.current.vec;
     addAverageData(phys.sensor_acc, acc);
     calcAverage(phys.sensor_acc, ave_acc);

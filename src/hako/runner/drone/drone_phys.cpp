@@ -102,6 +102,7 @@ static void drone_run_z(double u, DronePhysType& phys)
      */
     if (phys.next.pos.z < 0) {
       phys.next.pos.z = 0;
+      phys.next.vec.z = 0;
     }
     //std::cout << "u = " << u << std::endl;
     //std::cout << "curr rot.y = " << phys.current.rot.y << std::endl;
@@ -117,7 +118,7 @@ static void drone_run_z(double u, DronePhysType& phys)
 
 static void drone_run_rx(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#if 0
+#if 1
     double torque_phi = + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / 2.0f)
                         - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #else
@@ -133,7 +134,7 @@ static void drone_run_rx(const DronePropellerRotationRateType& propeller, DroneP
 }
 static void drone_run_ry(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
-#if 0
+#if 1
     double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[2] * propeller.w[2]) / 2.0f)
                           + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[3] * propeller.w[3]) / 2.0f);
 #else
