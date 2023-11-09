@@ -39,7 +39,7 @@ static void my_setup()
     memset(&drone_propeller, 0, sizeof(drone_propeller));
     initial_value.pos.x = 0;
     initial_value.pos.y = 0;
-    initial_value.rot.y = 0;
+    initial_value.rot.z = 0;
     drone_init(DRONE_PHYS_DELTA_TIME, param, initial_value, drone_phys);
     drone_sensor_init(drone_phys);
     drone_control_init(drone_ctrl, DRONE_PHYS_DELTA_TIME);
@@ -80,10 +80,17 @@ static void my_task()
 #define KEISU   4.0f
 #define ttsqrt(a) (a)
     if (hako_read_hil_actuator_controls(drone_phys.actuator.hil_actuator_controls)) {
-        drone_propeller.w[0] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[0]);
-        drone_propeller.w[1] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[1]);
-        drone_propeller.w[2] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[2]);
-        drone_propeller.w[3] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[3]);
+#if 1
+        drone_propeller.w[0] = drone_phys.actuator.hil_actuator_controls.controls[0];
+        drone_propeller.w[1] = drone_phys.actuator.hil_actuator_controls.controls[1];
+        drone_propeller.w[2] = drone_phys.actuator.hil_actuator_controls.controls[2];
+        drone_propeller.w[3] = drone_phys.actuator.hil_actuator_controls.controls[3];
+#else        
+        drone_propeller.w[0] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[2]);
+        drone_propeller.w[1] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[0]);
+        drone_propeller.w[2] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[3]);
+        drone_propeller.w[3] = ttsqrt(KEISU * drone_phys.actuator.hil_actuator_controls.controls[1]);
+#endif
     }
 #endif
     drone_run(drone_propeller, drone_phys);

@@ -79,6 +79,7 @@ static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
     phys.sensor.hil_state_quaternion.lat = CalculateLatitude(phys.current.pos, REFERENCE_LATITUDE);
     phys.sensor.hil_state_quaternion.lon = CalculateLongitude(phys.current.pos, REFERENCE_LONGTITUDE);
     phys.sensor.hil_state_quaternion.alt = CalculateAltitude(phys.current.pos, REFERENCE_ALTITUDE);
+    //std::cout << "alt: " << phys.current.pos.z << std::endl;
 
     return;
 }

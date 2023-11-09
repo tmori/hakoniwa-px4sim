@@ -119,8 +119,8 @@ static void drone_run_z(double u, DronePhysType& phys)
 static void drone_run_rx(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
 #if 0
-    double torque_phi = + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / 2.0f)
-                        - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / 2.0f);
+    double torque_phi = + (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[3] * propeller.w[3]) / sqrt(2.0f))
+                        - (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[2] * propeller.w[2]) / sqrt(2.0f));
 #else
     double torque_phi = - phys.param.l * phys.param.p * propeller.w[1] * propeller.w[1]
                         + phys.param.l * phys.param.p * propeller.w[3] * propeller.w[3];
@@ -135,8 +135,8 @@ static void drone_run_rx(const DronePropellerRotationRateType& propeller, DroneP
 static void drone_run_ry(const DronePropellerRotationRateType& propeller, DronePhysType& phys)
 {
 #if 0
-    double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[2] * propeller.w[2]) / 2.0f)
-                          + (phys.param.l * phys.param.p * ( propeller.w[1] * propeller.w[1] + propeller.w[3] * propeller.w[3]) / 2.0f);
+    double torque_theta = - (phys.param.l * phys.param.p * ( propeller.w[0] * propeller.w[0] + propeller.w[1] * propeller.w[1]) / sqrt(2.0f))
+                          + (phys.param.l * phys.param.p * ( propeller.w[2] * propeller.w[2] + propeller.w[3] * propeller.w[3]) / sqrt(2.0f));
 #else
     double torque_theta = - phys.param.l * phys.param.p * propeller.w[0] * propeller.w[0]
                         + phys.param.l * phys.param.p * propeller.w[2] * propeller.w[2];

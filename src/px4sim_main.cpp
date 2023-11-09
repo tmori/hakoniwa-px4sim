@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
             return -1;
         }
         px4sim_sender_init(comm_io);
-        px4sim_thread_receiver(comm_io);
+        //px4sim_thread_receiver(comm_io);
     }
     else if (strcmp("capture", arg_mode) == 0) {
         hako::px4::comm::TcpClient client;
