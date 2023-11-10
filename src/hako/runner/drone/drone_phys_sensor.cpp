@@ -26,6 +26,8 @@ void drone_sensor_init(DronePhysType &phys)
     memset(&phys.sensor.hil_gps, 0, sizeof(phys.sensor.hil_gps));
     memset(&phys.sensor.hil_sensor, 0, sizeof(phys.sensor.hil_sensor));
     memset(&phys.sensor.hil_state_quaternion, 0, sizeof(phys.sensor.hil_state_quaternion));
+    initAverageData(phys.sensor_pos, HIL_SENSOR_UP_CYCLE);
+    initAverageData(phys.sensor_vec, HIL_SENSOR_UP_CYCLE);
     initAverageData(phys.sensor_acc, HIL_SENSOR_UP_CYCLE);
 }
 
@@ -43,15 +45,23 @@ void drone_sensor_run(DronePhysType &phys)
 static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
 {
     phys.sensor.hil_state_quaternion.time_usec = 0;
-    
+
     phys.sensor.hil_state_quaternion.rollspeed = phys.current.rot_vec.x;
     phys.sensor.hil_state_quaternion.pitchspeed = phys.current.rot_vec.y;
     phys.sensor.hil_state_quaternion.yawspeed = phys.current.rot_vec.z;
 
+#if 0
     phys.sensor.hil_state_quaternion.vx = (Hako_int16)(phys.current.vec.x * 100);
     phys.sensor.hil_state_quaternion.vy = (Hako_int16)(phys.current.vec.y * 100);
     phys.sensor.hil_state_quaternion.vz = (Hako_int16)(phys.current.vec.z * 100);
-
+#else
+    Vector3Type ave_vec;
+    addAverageData(phys.sensor_vec, phys.current.vec);
+    calcAverage(phys.sensor_vec, ave_vec);
+    phys.sensor.hil_state_quaternion.vx = (Hako_int16)(ave_vec.x * 100);
+    phys.sensor.hil_state_quaternion.vy = (Hako_int16)(ave_vec.y * 100);
+    phys.sensor.hil_state_quaternion.vz = (Hako_int16)(ave_vec.z * 100);
+#endif
     // for acc
     Vector3Type acc_1;
     Vector3Type acc;
@@ -76,10 +86,19 @@ static void drone_sensor_run_hil_state_quaternion(DronePhysType &phys)
     phys.sensor.hil_state_quaternion.ind_airspeed = 0;
     phys.sensor.hil_state_quaternion.true_airspeed = 0;
 
+#if 0
     phys.sensor.hil_state_quaternion.lat = CalculateLatitude(phys.current.pos, REFERENCE_LATITUDE);
     phys.sensor.hil_state_quaternion.lon = CalculateLongitude(phys.current.pos, REFERENCE_LONGTITUDE);
     phys.sensor.hil_state_quaternion.alt = CalculateAltitude(phys.current.pos, REFERENCE_ALTITUDE);
     //std::cout << "alt: " << phys.current.pos.z << std::endl;
+#else
+    Vector3Type ave_pos;
+    addAverageData(phys.sensor_pos, phys.current.pos);
+    calcAverage(phys.sensor_pos, ave_pos);
+    phys.sensor.hil_state_quaternion.lat = CalculateLatitude(ave_pos, REFERENCE_LATITUDE);
+    phys.sensor.hil_state_quaternion.lon = CalculateLongitude(ave_pos, REFERENCE_LONGTITUDE);
+    phys.sensor.hil_state_quaternion.alt = CalculateAltitude(ave_pos, REFERENCE_ALTITUDE);
+#endif
 
     return;
 }
@@ -119,10 +138,19 @@ static void drone_sensor_run_hil_gps(DronePhysType &phys)
     phys.sensor.hil_gps.eph = 100;
     phys.sensor.hil_gps.epv = 100;
 
+#if 0
     phys.sensor.hil_gps.vel = vector3_magnitude(phys.current.vec) * 100.0f;
     phys.sensor.hil_gps.vn = phys.current.vec.x;
     phys.sensor.hil_gps.ve = phys.current.vec.y;
     phys.sensor.hil_gps.vd = -phys.current.vec.z;
+#else
+    Vector3Type ave_vec;
+    calcAverage(phys.sensor_vec, ave_vec);
+    phys.sensor.hil_gps.vel = vector3_magnitude(ave_vec) * 100.0f;
+    phys.sensor.hil_gps.vn = ave_vec.x;
+    phys.sensor.hil_gps.ve = ave_vec.y;
+    phys.sensor.hil_gps.vd = -ave_vec.z;
+#endif
     phys.sensor.hil_gps.cog = 0;
     phys.sensor.hil_gps.satellites_visible = 10;
     phys.sensor.hil_gps.id = 0;

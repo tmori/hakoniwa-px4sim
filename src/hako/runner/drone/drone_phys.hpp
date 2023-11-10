@@ -49,7 +49,7 @@ typedef struct {
     Vector3Type rot_vec;
 } DronePhysStateType;
 
-#define SENSOR_MAX_COUNT_NUM    10
+#define SENSOR_MAX_COUNT_NUM    128
 typedef struct {
     int inx;
     int max_count;
@@ -137,6 +137,8 @@ typedef struct {
      * Sensors
      */
     DroneSensorType sensor;
+    DroneSensorAverageDataType sensor_pos;
+    DroneSensorAverageDataType sensor_vec;
     DroneSensorAverageDataType sensor_acc;
     Vector3Type prev_vec;
 } DronePhysType;
