@@ -135,12 +135,14 @@ void *hako_sim_runner(void *argp)
         hako_sim_control.asset_time = 0;
         std::cout << "INFO: start simulation" << std::endl;
         while (true) {
+            auto diff_usec = (long long)(hako_asset_time - hako_px4_asset_time);      
             if (hako_asset_runner_step(1) == false) {
                 std::cout << "INFO: stopped simulation" << std::endl;
                 break;
             }
             else {
-                hako_sim_control.asset_time++;
+                hako_sim_control.asset_time += HAKO_PX4_RUNNER_MASTER_DELTA_USEC;
+                hako_asset_time = hako_sim_control.asset_time;
                 usleep(hako_sim_control.arg->delta_time_msec * 200);
             }
             //std::cout << "STEP" << std::endl;

@@ -9,11 +9,25 @@
 
 #include "../mavlink/mavlink_msg_types.hpp"
 
+#include "hako_capi.h"
+
+hako_time_t hako_asset_time = 0;
+hako_time_t hako_px4_asset_time = 0;
+static uint64_t px4_boot_time = 0;
 static void hako_mavlink_write_data(MavlinkDecodedMessage &message)
 {
     switch (message.type) {
         case MAVLINK_MSG_TYPE_HIL_ACTUATOR_CONTROLS:
             hako_mavlink_write_hil_actuator_controls(message.data.hil_actuator_controls);
+            if (px4_boot_time == 0) {
+                px4_boot_time = message.data.hil_actuator_controls.time_usec;
+            }
+            else {
+                hako_px4_asset_time = message.data.hil_actuator_controls.time_usec - px4_boot_time;
+                std::cout << "px4_asset_time : " << hako_px4_asset_time << std::endl;
+                std::cout << "hako_asset_time: " << hako_asset_time << std::endl;
+                std::cout << "diff_time      : " << (long long)(hako_asset_time - hako_px4_asset_time) << std::endl;
+            }
             break;
         case MAVLINK_MSG_TYPE_HEARTBEAT:
             break;
@@ -33,6 +47,7 @@ static void hako_mavlink_write_data(MavlinkDecodedMessage &message)
 
 void *px4sim_thread_receiver(void *arg)
 {
+    std::cout << "INFO: px4 reciver start" << std::endl;
     hako::px4::comm::ICommIO *clientConnector = static_cast<hako::px4::comm::ICommIO *>(arg);
     while (true) {
         char recvBuffer[1024];
